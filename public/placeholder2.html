@@ -1,0 +1,73 @@
+<!-- placeholder.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #008B8B;
+        }
+    </style>
+</head>
+<body>
+    <h3 id="loadingText">Poor network signal ...</h3>
+
+    <!-- <script>
+
+
+        let dots = 0;
+        const maxDots = 3;
+        const loadingTextElement = document.getElementById('loadingText');
+
+        function updateDots() {
+            let dotsStr = '';
+            for (let i = 0; i < dots; i++) {
+                dotsStr += '.';
+            }
+            loadingTextElement.textContent = `Poor network signal ${dotsStr}`;
+            dots = (dots + 1) % (maxDots + 1);
+        } -->
+
+
+<script>
+
+        
+        function checkOnlineStatus() {
+    console.log('Checking online status...');
+
+    // Delay the fetch call by 1 second (1000 milliseconds)
+    setTimeout(() => {
+        fetch('/checkOnline')
+            .then(response => {
+                console.log('Received response:', response.status);
+                if (response.status === 200) {
+                    console.log('Redirecting to home page...');
+                    window.location.href = '/';
+                } else {
+                    console.log('Response status is not 200:', response.status);
+                }
+            })
+            .catch(error => {
+                console.log('Fetch failed:', error.message);
+            });
+    }, 1000); // 1000 milliseconds delay
+}
+
+// Continue to call checkOnlineStatus every 5 seconds
+setInterval(checkOnlineStatus, 5000);
+
+    
+        
+     // Call the updateDots function every second to update the dots animation
+    //  setInterval(updateDots, 200);
+    </script>
+    
+
+</body>
+</html>

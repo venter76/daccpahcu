@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calendar</title>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css' rel='stylesheet' />
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js'></script>
+    <script>
+        $(document).ready(function() {
+            $('#calendar').fullCalendar({
+                defaultDate: new Date('<%= selectedYear %>', '<%= monthNumber %>'),
+                dayClick: function(date, jsEvent, view) {
+                    let selectedDate = date.format('YYYY-MM-DD');
+                    
+                    // Update the hidden input value and submit the form
+                    document.getElementById('selectedDate').value = selectedDate;
+                    document.getElementById('dateForm').submit();
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div id='calendar'></div>
+
+    <!-- Hidden form for submitting the selected date -->
+    <form id="dateForm" action="/day" method="post">
+        <input type="hidden" name="selectedDate" id="selectedDate">
+    </form>
+</body>
+</html>

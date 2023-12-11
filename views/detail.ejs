@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Detail Page</title>
+   
+    <link rel="manifest" href="manifest.json" /> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+</head>
+<body>
+    <h1>Selected Date: <%= selectedDate %></h1>
+   <% bookings.forEach(function(booking) { %>
+    <div class="col-12">
+        <div class="<%= booking.colour %>"> 
+          <div class="card-body">
+        
+                <h5 class="card-title">Patient name: <%= booking.patientFirstName %> <%= booking.patientSurname %></h5>
+        <br>
+                <p class="card-text">Folder Number: <%= booking.folderNumber %></p>
+                <p class="card-text">Procedure: <%= booking.procedure %></p>
+                <p class="card-text">Reason for Booking: <%= booking.reasonForBooking %></p>
+                <p class="card-text">Anaesthetist on list: <%= booking.anaesthetist %></p>
+                
+                
+                <p class="card-text">Booking Created: <span class="booking-date" data-date="<%= booking.booked.toISOString() %>"></span></p>
+
+                <p class="card-text">Booked by: <%= booking.bookingPerson %></p>
+                
+                <p class="card-text">Confirmed by: <%= booking.confirmPerson %></p>
+                <p class="card-text">Bed allocated by: <%= booking.allocatePerson %></p>
+            </div>
+            <div class="card-footer d-flex justify-content-around">
+                <!-- Change Status Button -->
+                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#statusModal<%= booking._id %>">
+                    Change Status
+                </button>
+            </div>
+            
+            <!-- Modal -->
+            <div class="modal fade" id="statusModal<%= booking._id %>" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="statusModalLabel">Booking Actions</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Buttons inside Modal -->
+                            
+                            <!-- Confirm Booking Form -->
+                            <form action="/confirmBooking" method="post" class="mb-2">
+                                <input type="hidden" name="id" value="<%= booking._id %>">
+                                <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
+                                <button type="submit" class="btn btn-success w-100">Confirm</button>
+                            </form>
+            
+                            <!-- Allocate Booking Form -->
+                            <form action="/allocateBooking" method="post" class="mb-2">
+                                <input type="hidden" name="id" value="<%= booking._id %>">
+                                <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
+                                <button type="submit" class="btn btn-success w-100">Allocate</button>
+                            </form>
+            
+                            <!-- Delete Booking Form -->
+                            <form action="/deleteBooking" method="post" class="mb-2">
+                                <input type="hidden" name="id" value="<%= booking._id %>">
+                                <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
+                                <button type="submit" class="btn btn-danger w-100">Delete</button>
+                            </form>
+            
+                            <!-- Edit Booking Form -->
+                            <form action="/editBooking" method="get" class="mb-2">
+                                <input type="hidden" name="id" value="<%= booking._id %>">
+                                <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
+                                <button type="submit" class="btn btn-primary w-100">Edit</button>
+                            </form>
+                    
+                            <!-- Move Booking Form -->
+                            <form action="/moveBooking" method="get" class="mb-2">
+                                <input type="hidden" name="id" value="<%= booking._id %>">
+                                <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
+                                <button type="submit" class="btn btn-info w-100">Move</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+            </div>
+            
+    <% }); %>
+
+    <!-- Add New Booking Button -->
+<div class="my-4">
+    <form action="/newBooking" method="get">
+        <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
+        <button type="submit" class="btn btn-secondary">Add New Booking</button>
+    </form>
+</div>
+
+<div class="my-4">
+    <form action="/base" method="get">
+        
+        <button type="submit" class="btn btn-secondary">Choose another Date</button>
+    </form>
+</div>
+
+<script>
+    document.querySelectorAll('.booking-date').forEach(element => {
+        const sastDate = new Date(element.dataset.date);
+        
+        element.textContent = sastDate.toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg' });
+    });
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous">
+</script>
+</body>
+</html>

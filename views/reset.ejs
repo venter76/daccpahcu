@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://kit.fontawesome.com/8a901d03fb.js" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    
+    <style>
+
+    .password-match {
+      background-image: linear-gradient(to bottom, green, green) !important;
+      background-size: 1px 10px;
+      background-repeat: no-repeat;
+      background-position: right center;
+  }
+  
+  .password-mismatch {
+      background-image: none;
+  }
+  </style>
+
+    </head>
+
+<body>
+
+
+<div class="container mt-5">
+
+  
+
+  <% if (error && error.length > 0) { %>
+    <div class="alert alert-danger error-message" role="alert">
+        <%= error[0] %>
+    </div>
+<% } %>
+
+
+
+  <h1>Reset Password</h1>
+
+ 
+
+  <div class="row">
+    <div class="col-sm-8">
+      <div class="card">
+        <div class="card-body">
+
+          <!-- Makes POST request to /reset/:token route -->
+          <form action="/reset/<%= token %>" method="POST">
+            <div class="form-group">
+              <label for="password">New Password</label>
+              <small id="passwordHelp" class="form-text text-danger">Password must be minimum 7 characters with at least 1 capital letter and 1 number.</small>
+              <input type="password" class="form-control" id="password" name="password">
+            </div>
+            <br>
+            <div class="form-group">
+              <label for="passwordConfirm">Confirm New Password</label>
+              <input type="password" class="form-control" id="passwordConfirm" name="passwordConfirm">
+            </div>
+            <br>
+            <button type="submit" class="btn btn-dark">Reset Password</button>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+ 
+     // Get the password input fields
+const passwordInput = document.getElementById('password');
+const passwordConfirmInput = document.getElementById('passwordConfirm');
+
+// Add event listeners for the input events on both fields
+passwordInput.addEventListener('input', function() {
+    console.log('Password input changed.');
+    checkPasswordMatch();
+});
+
+passwordConfirmInput.addEventListener('input', checkPasswordMatch);
+
+function checkPasswordMatch() {
+  console.log('Checking password match.');
+    if (passwordInput.value === passwordConfirmInput.value && passwordInput.value.length > 0) {
+      console.log('Passwords match.');
+      
+      if (passwordInput.value === passwordConfirmInput.value && passwordInput.value.length > 0) {
+    passwordConfirmInput.classList.add('password-match');
+    passwordConfirmInput.classList.remove('password-mismatch');
+} else {
+    passwordConfirmInput.classList.add('password-mismatch');
+    passwordConfirmInput.classList.remove('password-match');
+}
+    };
+
+      // If passwords match, change the background color of the dots in the password field
+    //     passwordConfirmInput.style.backgroundImage = 'linear-gradient(to bottom, green, green)';
+    //     passwordConfirmInput.style.backgroundSize = '1px 10px';
+    //     passwordConfirmInput.style.backgroundRepeat = 'no-repeat';
+    //     passwordConfirmInput.style.backgroundPosition = 'right center';
+    // } else {
+      console.log('Passwords do not match or fields are empty.');
+    //     // Reset to default style if they don't match or if they're empty
+    //     passwordConfirmInput.style.backgroundImage = 'none';
+    // }
+}
+</script>
+
+<script>
+  const form = document.querySelector('form');
+ form.addEventListener('submit', function(event) {
+  console.log('Form is being submitted.');
+     const password = document.querySelector('input[name="password"]').value;
+     const passwordConfirm = document.querySelector('input[name="passwordConfirm"]').value;
+ 
+     
+ 
+     const passwordPattern = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{7,}$/;
+     if (!passwordPattern.test(password)) {
+         event.preventDefault();
+         alert('Password must be minimum 7 characters with at least 1 capital letter and 1 number.');
+         return;
+     }
+ 
+     if (password !== passwordConfirm) {
+         event.preventDefault();
+         alert('Passwords do not match');
+         return;
+     }
+ });
+ 
+ 
+ </script>
+
+</body>
+</html>

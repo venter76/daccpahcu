@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Booking</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Edit Booking</h1>
+        <form action="/updateBooking" method="post">
+            <input type="hidden" name="id" value="<%= booking._id %>">
+            <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
+            <div class="form-group">
+                <label for="patientFirstName">Patient First Name:</label>
+                <input type="text" class="form-control" id="patientFirstName" name="patientFirstName" value="<%= booking.patientFirstName %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="patientSurname">Patient Surname:</label>
+                <input type="text" class="form-control" id="patientSurname" name="patientSurname" value="<%= booking.patientSurname %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="folderNumber">Folder Number:</label>
+                <input type="text" class="form-control" id="folderNumber" name="folderNumber" value="<%= booking.folderNumber %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="procedure">Surgical discipline and Procedure:</label>
+                <input type="text" class="form-control" id="procedure" name="procedure" value="<%= booking.procedure %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="reasonForBooking">Reason for Booking:</label>
+                <input type="text" class="form-control" id="reasonForBooking" name="reasonForBooking" value="<%= booking.reasonForBooking %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="anaesthetist">Anaesthetist on list:</label>
+                <input type="text" class="form-control" id="anaesthetist" name="anaesthetist" value="<%= booking.anaesthetist %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="anaesthetist">Booked by:</label>
+                <input type="text" class="form-control" id="bookingPerson" name="bookingPerson" value="<%= booking.bookingPerson %>" required>
+            </div>
+
+            
+
+            
+
+            <button type="submit" class="btn btn-primary">Update Booking</button>
+        </form>
+    </div>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
