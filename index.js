@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
-const flash = require('connect-flash');
+
 const mongoose = require("mongoose");
 const moment = require('moment');
 require('dotenv').config();
@@ -14,6 +14,7 @@ const crypto = require('crypto');
 const findOrCreate = require('mongoose-findorcreate');
 const cron = require('node-cron');
 const bcrypt = require('bcryptjs');
+const flash = require('connect-flash');
 const redirectToDashboardIfAuthenticated = require('./redirectToDashboardIfAuthenticated');
 const { v4: uuidv4 } = require('uuid');
 
@@ -31,7 +32,7 @@ app.set('view engine', 'ejs');
 
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(flash());
+
 
 
 //Nodemailer setup for email verification:
@@ -225,7 +226,7 @@ app.use(session({
 });
 
 
-
+app.use(flash());
 
   
 
@@ -236,8 +237,8 @@ app.use(session({
 
   // Define a limiter middleware for login attempts
   const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 15, // limit each IP to 5 requests per windowMs
+    windowMs: 30 * 60 * 1000, // 15 minutes
+    max: 30, // limit each IP to 5 requests per windowMs
     message: 'Too many login attempts, please try again in 15 minutes.'
   });
   
@@ -275,46 +276,46 @@ app.use(session({
 
 app.get('/', redirectToDashboardIfAuthenticated, (req, res) => {
   console.log("Going home");
-  res.render('home', { 
-      success: req.flash('success'),
-      error: req.flash('error')
-  });
+  res.render('home'); // Corrected syntax
 });
 
-// app.get('/', redirectToDashboardIfAuthenticated, (req, res) => {
-//   res.render('home', { 
-//       success: req.flash('success'),
-//       error: req.flash('error')
-//   });
-// });
+
+
 
 
 
 
 
 app.get('/login', (req, res) => {
+  console.log("Login get route hit");
+  console.log("Flash messages available:", req.flash('error')); // Debugging
   res.render('login', { 
     success: req.flash('success'),
-    error: req.flash('error') 
+    error: req.flash('error')
   });
 });
 
 
 
-app.post("/login", loginLimiter, function(req, res, next) {
-  passport.authenticate("local", function(err, user, info) {
 
+
+
+app.post("/login", loginLimiter, function(req, res, next) {
+  console.log("Login post route hit");
+
+  passport.authenticate("local", function(err, user, info) {
     if (err) {
-      console.log(err);
+      console.log("Passport authentication error:", err);
       return next(err); // Pass the error to the next middleware
     }
 
     if (!user) {
-      // Authentication failed, set flash error message
+      console.log("Authentication failed, user not found or incorrect credentials");
       req.flash('error', 'Incorrect username or password');
+      console.log("Flash message set:", req.flash('error')); // Debugging
       return res.redirect("/login");
     }
-
+    
 
     if (!user.active) {  // User exists but hasn't verified their email
       console.log("User email not verified");
@@ -322,26 +323,24 @@ app.post("/login", loginLimiter, function(req, res, next) {
       return res.redirect("/verifytoken");
     }
 
-   
-    
-
     req.login(user, function(err) {
       if (err) {
-        console.log(err);
+        console.log("Error during req.login:", err);
         return next(err); // Pass the error to the next middleware
       }
 
-      // At this point, the user is successfully authenticated. Mark them as logged in.
-      console.log("User logged in, setting session.isLoggedIn to true");
+      // At this point, the user is successfully authenticated.
+      console.log(`User ${user.email} logged in successfully, redirecting...`);
       req.session.isLoggedIn = true;
 
-      // If it's the user's first login (indicated by no firstname), redirect to the welcome page.
+      // Redirect based on user's first login status
       if (!user.firstname) {
+        console.log("Redirecting first-time user to welcome page");
         return res.redirect("/welcome");
+      } else {
+        console.log("Redirecting returning user to main page");
+        return res.redirect("/base");
       }
-
-      // If it's not the user's first login, redirect to their main page.
-      return res.redirect("/base");
     });   
   })(req, res, next);
 });
@@ -728,6 +727,7 @@ app.post('/reset/:token', async function(req, res, next) {
   
 
   app.get('/base', checkAuthenticated, async (req, res) => {
+    console.log("Entered base route");
     try {
       
       res.render('base', { user: req.user });
