@@ -288,12 +288,19 @@ app.get('/', redirectToDashboardIfAuthenticated, (req, res) => {
 
 app.get('/login', (req, res) => {
   console.log("Login get route hit");
-  console.log("Flash messages available:", req.flash('error')); // Debugging
+
+  // Retrieve and log both success and error flash messages
+  const successMessages = req.flash('success');
+  const errorMessages = req.flash('error');
+  console.log("Success flash messages available:", successMessages);
+  console.log("Error flash messages available:", errorMessages);
+
   res.render('login', { 
-    success: req.flash('success'),
-    error: req.flash('error')
+    success: successMessages,
+    error: errorMessages
   });
 });
+
 
 
 
@@ -312,9 +319,10 @@ app.post("/login", loginLimiter, function(req, res, next) {
     if (!user) {
       console.log("Authentication failed, user not found or incorrect credentials");
       req.flash('error', 'Incorrect username or password');
-      console.log("Flash message set:", req.flash('error')); // Debugging
+      console.log("Flash message set"); // Debugging
       return res.redirect("/login");
     }
+
     
 
     if (!user.active) {  // User exists but hasn't verified their email
