@@ -5,10 +5,19 @@
     <title>New Booking</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <style>
+        .custom-container {
+            border: 2px solid #007bff; /* Blue border */
+            border-radius: 15px; /* Rounded edges */
+            padding: 20px; /* Some padding inside the container */
+            margin-top: 20px; /* Margin at the top for some spacing */
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>New Booking for <%= selectedDate %></h1>
+    <div class="container custom-container">
+        <h1 class="text-center">New Booking for <%= selectedDate %></h1>
+        <br>
         <form action="/createBooking" method="post">
             <!-- Hidden field for date -->
             <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
@@ -49,7 +58,7 @@
                 <label for="surgical">Booked by:</label>
                 <input type="text" class="form-control" id="bookingPerson" name="bookingPerson" required>
             </div>
-
+<br>
             <button type="submit" class="btn btn-primary">Create Booking</button>
         </form>
     </div>

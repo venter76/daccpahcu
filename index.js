@@ -979,17 +979,20 @@ app.get('/detail', async (req, res) => {
       const selectedDate = req.query.selectedDate ? new Date(req.query.selectedDate) : new Date();
       const formattedDate = selectedDate.toISOString().split('T')[0];
 
-      // Retrieve bookings from the database that match the selectedDate
-      // and sort them by the 'booked' date in ascending order
-      const bookings = await PacuBooking.find({ selectedDate: formattedDate })
-                                       .sort({ booked: 1 }); // 1 for ascending order
+      const bookings = await PacuBooking.find({ selectedDate: formattedDate }).sort({ booked: 1 });
 
-      res.render('detail', { selectedDate: formattedDate, bookings: bookings });
+      if (bookings.length === 0) {
+          // Set a flash message if no bookings are found
+          req.flash('info', 'No bookings for this date yet');
+      }
+
+      res.render('detail', { selectedDate: formattedDate, bookings: bookings, message: req.flash('info') });
   } catch (error) {
       console.error(error);
       res.status(500).send('Error retrieving bookings');
   }
 });
+
 
 
 app.post('/deleteBooking', checkAuthenticated, async (req, res) => {
