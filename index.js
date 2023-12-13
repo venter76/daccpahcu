@@ -3,7 +3,7 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 
 const mongoose = require("mongoose");
-const moment = require('moment');
+const moment = require('moment-timezone');
 require('dotenv').config();
 const MongoStore = require('connect-mongo');
 const checkAuthenticated = require('./authenticate.js');
@@ -747,13 +747,21 @@ app.post('/reset/:token', async function(req, res, next) {
   });
   
   
-  app.post('/dateselect',  (req, res) => {
+  app.post('/dateselect', (req, res) => {
     try {
-        const selectedDate = req.body.date; // Assuming 'date' is the name attribute in your date input
-        console.log('Selected Date1:', selectedDate);
+        // User's selected date in local time (e.g., '2023-12-15')
+        const selectedDateString = req.body.date;
+        
+        // Append a default time (08:00 AM) to the selected date
+        const selectedDateWithTime = new Date(selectedDateString + "T08:00:00");
 
-        // Redirect to the /detail route with the selectedDate as a query parameter
-        res.redirect(`/detail?selectedDate=${selectedDate}`);
+        console.log('Selected Date with default time:', selectedDateWithTime);
+
+        // Format the date for the query parameter
+        const formattedDate = selectedDateWithTime.toISOString().split('T')[0];
+
+        // Redirect to the detail route with the formatted date
+        res.redirect(`/detail?selectedDate=${formattedDate}`);
     } catch (error) {
         console.error(error);
         res.status(500).send('Error processing request');
@@ -762,12 +770,64 @@ app.post('/reset/:token', async function(req, res, next) {
 
 
 
+// app.get('/detail', async (req, res) => {
+//   console.log("GET /detail route hit"); 
+//   try {
+//       const selectedDate = req.query.selectedDate ? new Date(req.query.selectedDate) : new Date();
+//       const formattedDate = selectedDate.toISOString().split('T')[0];
+
+//       const bookings = await PacuBooking.find({ selectedDate: formattedDate }).sort({ booked: 1 });
+
+//       if (bookings.length === 0) {
+//           // Set a flash message if no bookings are found
+//           req.flash('info', 'No bookings for this date yet');
+//       }
+
+//       res.render('detail', { selectedDate: formattedDate, bookings: bookings, message: req.flash('info') });
+//   } catch (error) {
+//       console.error(error);
+//       res.status(500).send('Error retrieving bookings');
+//   }
+// });
+
+
+app.get('/detail', async (req, res) => {
+    console.log("GET /detail route hit");
+  try {
+      // Retrieve the selectedDate from query parameters
+      const selectedDate = req.query.selectedDate;
+      console.log('Selected Date for detail:', selectedDate);
+
+      // Check if selectedDate is valid
+      if (!selectedDate) {
+        throw new Error("Invalid or missing date.");
+      }
+
+      // Parse the selectedDate to a Date object
+      const dateObj = new Date(selectedDate);
+
+      // Query for bookings with the specified selectedDate
+      const bookings = await PacuBooking.find({ selectedDate: dateObj }).sort({ booked: 1 });
+
+      console.log(`Number of bookings found for ${selectedDate}: ${bookings.length}`);
+      if (bookings.length === 0) {
+          req.flash('info', 'No bookings for this date yet');
+      }
+
+      // Render the detail page with the bookings
+      res.render('detail', { selectedDate: selectedDate, bookings: bookings, message: req.flash('info') });
+  } catch (error) {
+      console.error('Error in /detail route:', error);
+      res.status(500).send('Error retrieving bookings');
+  }
+});
 
  
 
 
 
 app.get('/editBooking', checkAuthenticated, async (req, res) => {
+  console.log("GET /detail route hit"); 
   try {
       const bookingId = req.query.id;
       const selectedDate = req.query.selectedDate; // Retrieve the selectedDate from query parameters
@@ -974,24 +1034,38 @@ app.post('/updateBooking', checkAuthenticated, async (req, res) => {
 
 
 
-app.get('/detail', async (req, res) => {
-  try {
-      const selectedDate = req.query.selectedDate ? new Date(req.query.selectedDate) : new Date();
-      const formattedDate = selectedDate.toISOString().split('T')[0];
+// app.get('/detail', async (req, res) => {
+//   try {
+//       const selectedDate = req.query.selectedDate ? new Date(req.query.selectedDate) : new Date();
+//       selectedDate.setHours(0, 0, 0, 0); // Set time to start of the day
+//       const nextDay = new Date(selectedDate);
+//       nextDay.setDate(selectedDate.getDate() + 1); // Set to the next day
 
-      const bookings = await PacuBooking.find({ selectedDate: formattedDate }).sort({ booked: 1 });
+//       console.log(`Fetching bookings for date: ${selectedDate.toISOString()}`);
 
-      if (bookings.length === 0) {
-          // Set a flash message if no bookings are found
-          req.flash('info', 'No bookings for this date yet');
-      }
+//       const bookings = await PacuBooking.find({
+//         selectedDate: {
+//           $gte: selectedDate,
+//           $lt: nextDay
+//         }
+//       }).sort({ booked: 1 });
 
-      res.render('detail', { selectedDate: formattedDate, bookings: bookings, message: req.flash('info') });
-  } catch (error) {
-      console.error(error);
-      res.status(500).send('Error retrieving bookings');
-  }
-});
+//       console.log(`Number of bookings found: ${bookings.length}`);
+
+//       if (bookings.length === 0) {
+//           console.log("No bookings found, setting flash message.");
+//           req.flash('info', 'No bookings for this date yet');
+//       } else {
+//           console.log("Bookings found, proceeding to render page.");
+//       }
+
+//       res.render('detail', { selectedDate: selectedDate.toISOString().split('T')[0], bookings: bookings, message: req.flash('info') });
+//   } catch (error) {
+//       console.error(error);
+//       res.status(500).send('Error retrieving bookings');
+//   }
+// });
+
 
 
 
