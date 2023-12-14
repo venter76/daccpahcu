@@ -1,4 +1,4 @@
-const CACHE_NAME = 'static-cache-v8';
+const CACHE_NAME = 'static-cache-v9';
 const STATIC_ASSETS = [
     '/placeholder2.html',
     '/iconLarge_1.png',
@@ -32,28 +32,43 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // Only cache GET requests
-    if (event.request.method === 'GET') {
-        event.respondWith(
-            caches.match(event.request).then(cachedResponse => {
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
+    // Define a list of paths that should always be network-first
+    const networkFirstPaths = ['/detail', '/base', '/edit', '/new'];
 
-                return fetch(event.request).then(fetchResponse => {
-                    if (!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type !== 'basic') {
-                        return fetchResponse;
+    // Check if the request URL matches any of the network-first paths
+    const isNetworkFirstPath = networkFirstPaths.some(path => event.request.url.includes(path));
+
+    if (event.request.method === 'GET') {
+        if (isNetworkFirstPath) {
+            // For dynamic content, use Network First strategy
+            event.respondWith(
+                fetch(event.request).catch(() => {
+                    return caches.match(event.request);
+                })
+            );
+        } else {
+            // For static assets, use Cache First strategy
+            event.respondWith(
+                caches.match(event.request).then(cachedResponse => {
+                    if (cachedResponse) {
+                        return cachedResponse;
                     }
 
-                    const responseToCache = fetchResponse.clone();
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(event.request, responseToCache);
-                    });
+                    return fetch(event.request).then(fetchResponse => {
+                        if (!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type !== 'basic') {
+                            return fetchResponse;
+                        }
 
-                    return fetchResponse;
-                });
-            })
-        );
+                        const responseToCache = fetchResponse.clone();
+                        caches.open(CACHE_NAME).then(cache => {
+                            cache.put(event.request, responseToCache);
+                        });
+
+                        return fetchResponse;
+                    });
+                })
+            );
+        }
     } else {
         // For non-GET requests, don't use the cache
         event.respondWith(fetch(event.request));
