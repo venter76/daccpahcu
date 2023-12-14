@@ -853,10 +853,12 @@ app.get('/editBooking', checkAuthenticated, async (req, res) => {
 
 
 app.post('/confirmBooking', async (req, res) => {
+  console.log("POST confirmation route hit"); 
   try {
       const bookingId = req.body.id;
+      console.log(bookingId);
       const userSurname = req.user.surname; // Assuming the surname is stored in req.user.surname
-
+console.log(userSurname);
       const update = {
           confirmed: 'yes',
           confirmPerson: userSurname,
@@ -874,10 +876,14 @@ app.post('/confirmBooking', async (req, res) => {
 
 
 app.post('/allocateBooking', async (req, res) => {
+  console.log("POST allocation route hit"); 
+
   try {
       const bookingId = req.body.id;
+      console.log(bookingId);
       const userSurname = req.user.surname; // Assuming the surname is stored in req.user.surname
-
+      console.log(userSurname);
+      
       const update = {
           confirmed: 'allocated',
           allocatePerson: userSurname,
