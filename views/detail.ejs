@@ -9,7 +9,7 @@
 </head>
 <body>
     <br>
-    <h1>Selected Date: <%= selectedDate %></h1>
+    <h2>Selected Date: <%= selectedDate %></h2>
     <br>
 
     <!-- Display flash message if no bookings -->
@@ -105,14 +105,14 @@
 <div class="my-4">
     <form action="/newBooking" method="get">
         <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
-        <button type="submit" class="btn btn-secondary">Add New Booking</button>
+        <button type="submit" class="btn btn-secondary">Add New Booking for this Date</button>
     </form>
 </div>
 
 <div class="my-4">
     <form action="/base" method="get">
         
-        <button type="submit" class="btn btn-secondary">Select another Date</button>
+        <button type="submit" class="btn btn-secondary">Go back to Calendar</button>
     </form>
 </div>
 

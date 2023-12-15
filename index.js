@@ -883,7 +883,7 @@ app.post('/allocateBooking', async (req, res) => {
       console.log(bookingId);
       const userSurname = req.user.surname; // Assuming the surname is stored in req.user.surname
       console.log(userSurname);
-      
+
       const update = {
           confirmed: 'allocated',
           allocatePerson: userSurname,
@@ -1040,38 +1040,6 @@ app.post('/updateBooking', checkAuthenticated, async (req, res) => {
 
 
 
-// app.get('/detail', async (req, res) => {
-//   try {
-//       const selectedDate = req.query.selectedDate ? new Date(req.query.selectedDate) : new Date();
-//       selectedDate.setHours(0, 0, 0, 0); // Set time to start of the day
-//       const nextDay = new Date(selectedDate);
-//       nextDay.setDate(selectedDate.getDate() + 1); // Set to the next day
-
-//       console.log(`Fetching bookings for date: ${selectedDate.toISOString()}`);
-
-//       const bookings = await PacuBooking.find({
-//         selectedDate: {
-//           $gte: selectedDate,
-//           $lt: nextDay
-//         }
-//       }).sort({ booked: 1 });
-
-//       console.log(`Number of bookings found: ${bookings.length}`);
-
-//       if (bookings.length === 0) {
-//           console.log("No bookings found, setting flash message.");
-//           req.flash('info', 'No bookings for this date yet');
-//       } else {
-//           console.log("Bookings found, proceeding to render page.");
-//       }
-
-//       res.render('detail', { selectedDate: selectedDate.toISOString().split('T')[0], bookings: bookings, message: req.flash('info') });
-//   } catch (error) {
-//       console.error(error);
-//       res.status(500).send('Error retrieving bookings');
-//   }
-// });
-
 
 
 
@@ -1096,32 +1064,61 @@ app.post('/deleteBooking', checkAuthenticated, async (req, res) => {
   }
 });
 
-
 app.post('/newdate', async (req, res) => {
   try {
       const bookingId = req.body.id;
-      const newDate = new Date(req.body.newDate);
+      const newDateString = req.body.newDate; // Store the new date string
 
-      if (!bookingId || !newDate) {
+      if (!bookingId || !newDateString) {
           throw new Error('Missing booking ID or new date');
       }
 
-     // Define the default colour
-     const defaultColour = 'card text-bg-danger mb-3';
+      const newDate = new Date(newDateString);
 
-     // Update the booking in the database
-     await PacuBooking.findByIdAndUpdate(bookingId, {
-         selectedDate: newDate,
-         colour: defaultColour // Resetting the colour to the default
-     });
+      // Define the default colour
+      const defaultColour = 'card text-bg-danger mb-3';
+
+      // Update the booking in the database
+      await PacuBooking.findByIdAndUpdate(bookingId, {
+          selectedDate: newDate,
+          colour: defaultColour // Resetting the colour to the default
+      });
      
-      // Redirect back to the detail page or another appropriate page
-      res.redirect('/detail');
+      // Redirect back to the detail page with the new date as a query parameter
+      res.redirect(`/detail?selectedDate=${newDateString}`);
   } catch (error) {
       console.error('Error updating booking date:', error);
       res.status(500).send('Internal Server Error');
   }
 });
+
+
+
+// app.post('/newdate', async (req, res) => {
+//   try {
+//       const bookingId = req.body.id;
+//       const newDate = new Date(req.body.newDate);
+
+//       if (!bookingId || !newDate) {
+//           throw new Error('Missing booking ID or new date');
+//       }
+
+//      // Define the default colour
+//      const defaultColour = 'card text-bg-danger mb-3';
+
+//      // Update the booking in the database
+//      await PacuBooking.findByIdAndUpdate(bookingId, {
+//          selectedDate: newDate,
+//          colour: defaultColour // Resetting the colour to the default
+//      });
+     
+//       // Redirect back to the detail page or another appropriate page
+//       res.redirect('/detail');
+//   } catch (error) {
+//       console.error('Error updating booking date:', error);
+//       res.status(500).send('Internal Server Error');
+//   }
+// });
 
 
 
