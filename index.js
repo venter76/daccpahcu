@@ -218,7 +218,7 @@ app.use((req, res, next) => {
   const userSession = req.session;
 
   // Determine the session timeout based on the user's role and device type
-  let timeoutDuration = 600000; // Default timeout: 10 minutes (in milliseconds)
+  let timeoutDuration = 20000; // Default timeout: 2 minutes (in milliseconds)
 
   if (req.session.passport && req.session.passport.user) {
     const user = req.session.passport.user;
@@ -231,7 +231,7 @@ app.use((req, res, next) => {
       timeoutDuration = 43200000; // 12 hours for "edit" role and mobile device (in milliseconds)
       console.log("Timeout set to 12 hours for 'edit' role and mobile device.");
     } else {
-      console.log("Timeout set to 10 minutes (default).");
+      console.log("Timeout set to 2 minutes (default).");
     }
   }
 
@@ -240,12 +240,20 @@ app.use((req, res, next) => {
 
   // Set a timer to automatically log the user out after the determined timeout period
   const inactivityTimeout = setTimeout(() => {
-    // Clear the session and log the user out
-    userSession.destroy((err) => {
-      if (err) {
-        console.error('Error destroying session:', err);
-      }
-    });
+    // Check if the session has already been destroyed and a response sent
+    if (!userSession.destroyed) {
+
+      // Log that the session is destroyed
+    console.log("Session destroyed due to inactivity.");
+      // Clear the session
+      userSession.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+        }
+      });
+
+      // Redirect to the login page upon session timeout
+    }
   }, timeoutDuration);
 
   // Reset the timer on user interaction
@@ -254,6 +262,7 @@ app.use((req, res, next) => {
   // Continue with the next middleware or route handler
   next();
 });
+
 
 
 
@@ -390,8 +399,8 @@ app.post("/login", loginLimiter, function(req, res, next) {
 
       // Set the session cookie maxAge based on user's role
       if (user.role === "edit") {
-        req.session.cookie.maxAge = 600000; // 10 minutes (for "edit" role)
-        console.log("Session maxAge set to 10 minutes for 'edit' role.");
+        req.session.cookie.maxAge = 20000; // 2 minutes (for "edit" role)
+        console.log("Session maxAge set to 2 minutes for 'edit' role.");
       } else if (user.role === "none") {
         req.session.cookie.maxAge = 86400000; // 24 hours (for "none" role)
         console.log("Session maxAge set to 24 hours for 'none' role.");
@@ -802,7 +811,7 @@ app.post('/reset/:token', async function(req, res, next) {
   });
   
   
-  app.post('/dateselect', (req, res) => {
+  app.post('/dateselect', checkAuthenticated, async (req, res) => {
     try {
         // User's selected date in local time (e.g., '2023-12-15')
         const selectedDateString = req.body.date;
@@ -825,28 +834,10 @@ app.post('/reset/:token', async function(req, res, next) {
 
 
 
-// app.get('/detail', async (req, res) => {
-//   console.log("GET /detail route hit"); 
-//   try {
-//       const selectedDate = req.query.selectedDate ? new Date(req.query.selectedDate) : new Date();
-//       const formattedDate = selectedDate.toISOString().split('T')[0];
-
-//       const bookings = await PacuBooking.find({ selectedDate: formattedDate }).sort({ booked: 1 });
-
-//       if (bookings.length === 0) {
-//           // Set a flash message if no bookings are found
-//           req.flash('info', 'No bookings for this date yet');
-//       }
-
-//       res.render('detail', { selectedDate: formattedDate, bookings: bookings, message: req.flash('info') });
-//   } catch (error) {
-//       console.error(error);
-//       res.status(500).send('Error retrieving bookings');
-//   }
-// });
 
 
-app.get('/detail', async (req, res) => {
+
+app.get('/detail', checkAuthenticated, async (req, res) => {
     console.log("GET /detail route hit");
   try {
       // Retrieve the selectedDate from query parameters
@@ -911,7 +902,7 @@ app.get('/editBooking', checkAuthenticated, async (req, res) => {
 
 
 
-app.post('/confirmBooking', async (req, res) => {
+app.post('/confirmBooking', checkAuthenticated, async (req, res) => {
   console.log("POST confirmation route hit"); 
   try {
       const bookingId = req.body.id;
@@ -934,7 +925,7 @@ console.log(userSurname);
 });
 
 
-app.post('/allocateBooking', async (req, res) => {
+app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
   console.log("POST allocation route hit"); 
 
   try {
@@ -1153,31 +1144,7 @@ app.post('/newdate', async (req, res) => {
 
 
 
-// app.post('/newdate', async (req, res) => {
-//   try {
-//       const bookingId = req.body.id;
-//       const newDate = new Date(req.body.newDate);
 
-//       if (!bookingId || !newDate) {
-//           throw new Error('Missing booking ID or new date');
-//       }
-
-//      // Define the default colour
-//      const defaultColour = 'card text-bg-danger mb-3';
-
-//      // Update the booking in the database
-//      await PacuBooking.findByIdAndUpdate(bookingId, {
-//          selectedDate: newDate,
-//          colour: defaultColour // Resetting the colour to the default
-//      });
-     
-//       // Redirect back to the detail page or another appropriate page
-//       res.redirect('/detail');
-//   } catch (error) {
-//       console.error('Error updating booking date:', error);
-//       res.status(500).send('Internal Server Error');
-//   }
-// });
 
 
 
