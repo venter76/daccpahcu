@@ -218,7 +218,7 @@ app.use((req, res, next) => {
   const userSession = req.session;
 
   // Determine the session timeout based on the user's role and device type
-  let timeoutDuration = 20000; // Default timeout: 2 minutes (in milliseconds)
+  let timeoutDuration = 600000; // Default timeout: 10 minutes (in milliseconds)
 
   if (req.session.passport && req.session.passport.user) {
     const user = req.session.passport.user;
@@ -231,7 +231,7 @@ app.use((req, res, next) => {
       timeoutDuration = 43200000; // 12 hours for "edit" role and mobile device (in milliseconds)
       console.log("Timeout set to 12 hours for 'edit' role and mobile device.");
     } else {
-      console.log("Timeout set to 2 minutes (default).");
+      console.log("Timeout set to 10 minutes (default).");
     }
   }
 
@@ -399,7 +399,7 @@ app.post("/login", loginLimiter, function(req, res, next) {
 
       // Set the session cookie maxAge based on user's role
       if (user.role === "edit") {
-        req.session.cookie.maxAge = 20000; // 2 minutes (for "edit" role)
+        req.session.cookie.maxAge = 600000; // 10 minutes (for "edit" role)
         console.log("Session maxAge set to 2 minutes for 'edit' role.");
       } else if (user.role === "none") {
         req.session.cookie.maxAge = 86400000; // 24 hours (for "none" role)
