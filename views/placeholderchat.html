@@ -1,0 +1,66 @@
+<!-- placeholder.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #008B8B;
+        }
+    </style>
+</head>
+<body>
+    <h3 id="loadingText">Finding your uniform ...</h3>
+
+    <script>
+
+
+        let dots = 0;
+        const maxDots = 3;
+        const loadingTextElement = document.getElementById('loadingText');
+
+        function updateDots() {
+            let dotsStr = '';
+            for (let i = 0; i < dots; i++) {
+                dotsStr += '.';
+            }
+            loadingTextElement.textContent = `Finding your uniform ${dotsStr}`;
+            dots = (dots + 1) % (maxDots + 1);
+        }
+
+
+
+
+        function checkOnlineStatus() {
+            console.log('Checking online status...');
+    
+            fetch('/checkOnline')
+                .then(response => {
+                    console.log('Received response:', response.status);
+                    if (response.status === 200) {
+                        console.log('Redirecting to home page...');
+                        window.location.href = '/';
+                    } else {
+                        console.log('Response status is not 200:', response.status);
+                    }
+                })
+                .catch(error => {
+                    console.log('Fetch failed:', error.message);
+                });
+        }
+    
+        // Call the function every 1 seconds
+        setInterval(checkOnlineStatus, 1000); 
+     // Call the updateDots function every second to update the dots animation
+     setInterval(updateDots, 500);
+    </script>
+    
+
+</body>
+</html>

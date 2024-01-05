@@ -7,6 +7,8 @@ const moment = require('moment-timezone');
 require('dotenv').config();
 const MongoStore = require('connect-mongo');
 const checkAuthenticated = require('./authenticate.js');
+const checkUserRole = require('./roleChecker');
+const useragent = require("express-useragent");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const nodemailer = require('nodemailer');
@@ -32,7 +34,7 @@ app.set('view engine', 'ejs');
 
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended: true}));
-
+app.use(useragent.express());
 
 
 //Nodemailer setup for email verification:
@@ -151,7 +153,7 @@ const PacuBooking = mongoose.model('PacuBooking', pacuBookingSchema);
 const userSchema = new mongoose.Schema({
   email: String,
   password: String,
-  verificationToken: String, // New field for verification token
+  verificationToken: String, // Field for verification token
   resetPasswordToken: String, // Field for password reset token
   resetPasswordExpires: Date, // Field for token expiration time
   firstname: String,
@@ -162,9 +164,9 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    default: "user" 
+    default: "edit"
   },
-  active: {  // Adding the 'active' field
+  active: { // 'active' field to indicate if the account is active
     type: Boolean,
     default: false
   }
@@ -173,7 +175,8 @@ const userSchema = new mongoose.Schema({
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);
 
-const User = new mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+
 
 
 
@@ -200,10 +203,59 @@ app.use(session({
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // must be 'none' to enable cross-site delivery
       httpOnly: true, // prevents JavaScript from making changes
-      maxAge: 12 * 60 * 60 * 1000 // 12 hours
+      
 
-    }
+    },
+    rolling: true, // Enable the rolling behavior
   }));
+
+
+// Automatically log the user out after a timeout period based on role and inactivity
+app.use((req, res, next) => {
+  console.log("Inactivity timeout middleware entered.");
+  
+  // Store a reference to the user's session
+  const userSession = req.session;
+
+  // Determine the session timeout based on the user's role and device type
+  let timeoutDuration = 600000; // Default timeout: 10 minutes (in milliseconds)
+
+  if (req.session.passport && req.session.passport.user) {
+    const user = req.session.passport.user;
+
+    // Check the user's role and device type and set the timeout accordingly
+    if (user.role === "none") {
+      timeoutDuration = 43200000; // 12 hours for "none" role (in milliseconds)
+      console.log("Timeout set to 12 hours for 'none' role.");
+    } else if (user.role === "edit" && req.useragent.isMobile) {
+      timeoutDuration = 43200000; // 12 hours for "edit" role and mobile device (in milliseconds)
+      console.log("Timeout set to 12 hours for 'edit' role and mobile device.");
+    } else {
+      console.log("Timeout set to 10 minutes (default).");
+    }
+  }
+
+  // Log the device type
+  console.log("Device Type:", req.useragent.isMobile ? "Mobile" : "Desktop");
+
+  // Set a timer to automatically log the user out after the determined timeout period
+  const inactivityTimeout = setTimeout(() => {
+    // Clear the session and log the user out
+    userSession.destroy((err) => {
+      if (err) {
+        console.error('Error destroying session:', err);
+      }
+    });
+  }, timeoutDuration);
+
+  // Reset the timer on user interaction
+  userSession.cookie.maxAge = timeoutDuration;
+
+  // Continue with the next middleware or route handler
+  next();
+});
+
+
 
 
   app.use(passport.initialize());
@@ -304,9 +356,6 @@ app.get('/login', (req, res) => {
 
 
 
-
-
-
 app.post("/login", loginLimiter, function(req, res, next) {
   console.log("Login post route hit");
 
@@ -322,8 +371,6 @@ app.post("/login", loginLimiter, function(req, res, next) {
       console.log("Flash message set"); // Debugging
       return res.redirect("/login");
     }
-
-    
 
     if (!user.active) {  // User exists but hasn't verified their email
       console.log("User email not verified");
@@ -341,17 +388,30 @@ app.post("/login", loginLimiter, function(req, res, next) {
       console.log(`User ${user.email} logged in successfully, redirecting...`);
       req.session.isLoggedIn = true;
 
+      // Set the session cookie maxAge based on user's role
+      if (user.role === "edit") {
+        req.session.cookie.maxAge = 600000; // 10 minutes (for "edit" role)
+        console.log("Session maxAge set to 10 minutes for 'edit' role.");
+      } else if (user.role === "none") {
+        req.session.cookie.maxAge = 86400000; // 24 hours (for "none" role)
+        console.log("Session maxAge set to 24 hours for 'none' role.");
+      } else {
+        console.log("Default session maxAge used.");
+      }
+
       // Redirect based on user's first login status
       if (!user.firstname) {
         console.log("Redirecting first-time user to welcome page");
         return res.redirect("/welcome");
       } else {
-        console.log("Redirecting returning user to main page");
+        console.log("Redirecting returning user to the main page");
         return res.redirect("/base");
       }
-    });   
+    });
   })(req, res, next);
 });
+
+
 
 
 
@@ -455,12 +515,7 @@ app.post('/register', async function(req, res) {
           }
       }
 
-  // try {
-  //     const existingUser = await User.findOne({ username: req.body.username });
-  //     if (existingUser) {
-  //         req.flash('error', 'User already exists. Please login.');
-  //         return res.redirect('/login');
-  //     }
+  
 
       const user = await User.register({ username: req.body.username, active: false }, req.body.password);
 
@@ -828,6 +883,10 @@ app.get('/detail', async (req, res) => {
 
 app.get('/editBooking', checkAuthenticated, async (req, res) => {
   console.log("GET /detail route hit"); 
+
+  // Call checkUserRole function after authentication check
+  checkUserRole(req.user);
+  
   try {
       const bookingId = req.query.id;
       const selectedDate = req.query.selectedDate; // Retrieve the selectedDate from query parameters
