@@ -873,14 +873,16 @@ app.get('/detail', checkAuthenticated, async (req, res) => {
 
 
 app.get('/editBooking', checkAuthenticated, async (req, res) => {
-  console.log("GET /detail route hit"); 
+  console.log("GET editBooking route hit"); 
+
+  // Retrieve selectedDate from query parameters
+  const selectedDate = req.query.selectedDate;
 
   // Call checkUserRole function after authentication check
-  checkUserRole(req.user);
+  checkUserRole(req.user, req, res, selectedDate);
   
   try {
       const bookingId = req.query.id;
-      const selectedDate = req.query.selectedDate; // Retrieve the selectedDate from query parameters
 
       const booking = await PacuBooking.findById(bookingId);
       if (!booking) {
@@ -898,17 +900,31 @@ app.get('/editBooking', checkAuthenticated, async (req, res) => {
 
 
 
-
-
-
-
 app.post('/confirmBooking', checkAuthenticated, async (req, res) => {
   console.log("POST confirmation route hit"); 
   try {
       const bookingId = req.body.id;
       console.log(bookingId);
       const userSurname = req.user.surname; // Assuming the surname is stored in req.user.surname
-console.log(userSurname);
+      console.log(userSurname);
+
+      // Get the selectedDate from the request
+      const selectedDate = new Date(req.body.selectedDate);
+
+      // Get the current date
+      const currentDate = new Date();
+
+      // Check if the selectedDate is not the same as the current date
+      if (selectedDate.getDate() !== currentDate.getDate() ||
+          selectedDate.getMonth() !== currentDate.getMonth() ||
+          selectedDate.getFullYear() !== currentDate.getFullYear()) {
+        // Set a flash message
+        req.flash('info', 'You may only confirm on the day');
+        // Redirect back to the detail page
+        return res.redirect(`/detail?selectedDate=${req.body.selectedDate}`);
+      }
+
+      // If the dates are the same, proceed with confirmation
       const update = {
           confirmed: 'yes',
           confirmPerson: userSurname,
@@ -934,6 +950,22 @@ app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
       const userSurname = req.user.surname; // Assuming the surname is stored in req.user.surname
       console.log(userSurname);
 
+      // Get the selectedDate from the request
+      const selectedDate = new Date(req.body.selectedDate);
+
+      // Get the current date
+      const currentDate = new Date();
+
+      // Check if the selectedDate is not the same as the current date
+      if (selectedDate.getDate() !== currentDate.getDate() ||
+          selectedDate.getMonth() !== currentDate.getMonth() ||
+          selectedDate.getFullYear() !== currentDate.getFullYear()) {
+        // Set a flash message
+        req.flash('info', 'You may only allocate on the day');
+        // Redirect back to the detail page
+        return res.redirect(`/detail?selectedDate=${req.body.selectedDate}`);
+      }
+
       const update = {
           confirmed: 'allocated',
           allocatePerson: userSurname,
@@ -948,6 +980,7 @@ app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
       res.status(500).send('Error allocating booking');
   }
 });
+
 
 
 
