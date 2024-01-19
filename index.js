@@ -614,15 +614,31 @@ app.post('/forgotpassword', async function(req, res, next) {
 
       await user.save(); // Use await here instead of the callback
 
+
+
       const mailOptions = {
-          to: user.username,
-          from: 'brayroadapps@gmail.com',
-          subject: 'Node.js Password Reset',
-          text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
-          'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-          'http://' + req.headers.host + '/reset/' + token + '\n\n' +
-          'If you did not request this, please ignore this email and your password will remain unchanged.\n'
-      };
+        to: user.username,
+        from: 'brayroadapps@gmail.com',
+        subject: 'Node.js Password Reset',
+        text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
+        'Please copy the following token and paste it into the appropriate field on the password reset page:\n\n' +
+        token + '\n\n' +
+        'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+    };
+    
+
+
+
+
+      // const mailOptions = {
+      //     to: user.username,
+      //     from: 'brayroadapps@gmail.com',
+      //     subject: 'Node.js Password Reset',
+      //     text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
+      //     'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
+      //     'http://' + req.headers.host + '/reset/' + token + '\n\n' +
+      //     'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+      // };
 
       // Convert sendMail to Promise
       const info = await new Promise((resolve, reject) => {
@@ -632,53 +648,61 @@ app.post('/forgotpassword', async function(req, res, next) {
           });
       });
 
-      console.log('Email sent: ' + info.response);
-      return res.redirect('/forgotpassword?message=Email%20has%20been%20sent%20with%20further%20instructions');
-  
+      console.log('Password reset email sent');
+
+      // Redirect to the reset page
+      res.redirect('/reset');
   } catch (error) {
       console.error("Error occurred:", error);
-      return res.redirect('/forgotpassword?message=An%20error%20occurred');
+      res.redirect('/forgotpassword?message=An%20error%20occurred');
   }
 });
 
     
 
-app.get('/reset/:token', async function(req, res, next) {
-  try {
-    const user = await User.findOne({ 
-      resetPasswordToken: req.params.token, 
-      resetPasswordExpires: { $gt: Date.now() } 
-    });
+// app.get('/reset/:token', async function(req, res, next) {
+//   try {
+//     const user = await User.findOne({ 
+//       resetPasswordToken: req.params.token, 
+//       resetPasswordExpires: { $gt: Date.now() } 
+//     });
 
-    if (!user) {
-      // handle error: no user with this token, or token expired
-      console.log('Password reset token is invalid or has expired.');
-      return res.redirect('/forgotpassword?message=Password%20reset%20token%20is%20invalid%20or%20has%20expired');
-    }
+//     if (!user) {
+//       // handle error: no user with this token, or token expired
+//       console.log('Password reset token is invalid or has expired.');
+//       return res.redirect('/forgotpassword?message=Password%20reset%20token%20is%20invalid%20or%20has%20expired');
+//     }
 
-    // if user found, render a password reset form
-    res.render('reset', {
-      token: req.params.token,
-      error: req.flash('error')
-    });
-  } catch (err) {
-    console.error("Error occurred:", err);
-    next(err); // pass the error to your error-handling middleware, if you have one
-  }
+//     // if user found, render a password reset form
+//     res.render('reset', {
+//       token: req.params.token,
+//       error: req.flash('error')
+//     });
+//   } catch (err) {
+//     console.error("Error occurred:", err);
+//     next(err); // pass the error to your error-handling middleware, if you have one
+//   }
+// });
+
+
+app.get('/reset', function(req, res) {
+  res.render('reset', { error: req.flash('error') });
 });
 
 
 
-app.post('/reset/:token', async function(req, res, next) {
+
+app.post('/reset', async function(req, res, next) {
   try {
     const user = await User.findOne({ 
-      resetPasswordToken: req.params.token, 
+      resetPasswordToken: req.body.token, // Get token from form body
       resetPasswordExpires: { $gt: Date.now() } 
     });
 
     if (!user) {
       console.log('Password reset token is invalid or has expired.');
-      return res.redirect('/forgotpassword?message=Password%20reset%20token%20is%20invalid%20or%20has%20expired');
+      req.flash('error', 'Password reset token is invalid or has expired.');
+      return res.redirect('/forgotpassword');
     }
 
     const passwordPattern = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{7,}$/;
@@ -715,7 +739,8 @@ app.post('/reset/:token', async function(req, res, next) {
 
   } catch (err) {
     console.error("Error occurred:", err);
-    next(err); 
+    req.flash('error', 'An error occurred during password reset.');
+    res.redirect('/reset');
   }
 });
 

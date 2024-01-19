@@ -203,11 +203,17 @@ form.addEventListener('submit', function(event) {
     const password = document.querySelector('input[name="password"]').value;
     const passwordConfirm = document.querySelector('input[name="passwordConfirm"]').value;
 
-    if (!email.endsWith("@gmail.com")) {
+    if (!email.endsWith("@sun.ac.za")) {
         event.preventDefault();
-        alert('Only gmail address can be used.');
+        alert('Only SUN email address can be used.');
         return;
     }
+    
+    // if (!email.endsWith("@gmail.com")) {
+    //     event.preventDefault();
+    //     alert('Only gmail address can be used.');
+    //     return;
+    // }
 
     const passwordPattern = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{7,}$/;
     if (!passwordPattern.test(password)) {
