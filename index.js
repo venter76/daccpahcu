@@ -1296,7 +1296,7 @@ app.post('/cancelAllocation', checkAuthenticated, async (req, res) => {
   console.log("POST cancel allocation route hit");
 
   // Retrieve selectedDate from request body
-  const selectedDateStr = req.body.selectedDate;
+  const selectedDate = req.body.selectedDate;
 
    // Check user role and proceed only if true is returned
    if (!checkUserRole(req.user, req, res, selectedDate)) {
@@ -1316,7 +1316,7 @@ app.post('/cancelAllocation', checkAuthenticated, async (req, res) => {
       // Check if the booking is already allocated
       if (currentBooking.confirmed !== 'allocated') {
           req.flash('info', 'The booking needs to be allocated before it can be cancelled');
-          return res.redirect(`/detail?selectedDate=${selectedDateStr}`);
+          return res.redirect(`/detail?selectedDate=${selectedDate}`);
       }
 
       // Proceed to update the booking to cancel the allocation
@@ -1329,7 +1329,7 @@ app.post('/cancelAllocation', checkAuthenticated, async (req, res) => {
       await PacuBooking.findByIdAndUpdate(bookingId, update);
 
       // Redirect back to the detail page with the selected date
-      res.redirect(`/detail?selectedDate=${selectedDateStr}`);
+      res.redirect(`/detail?selectedDate=${selectedDate}`);
   } catch (error) {
       console.error('Error cancelling booking allocation:', error);
       req.flash('error', 'Error cancelling booking allocation');
