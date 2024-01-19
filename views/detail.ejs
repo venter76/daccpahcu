@@ -12,7 +12,7 @@
     <h2>Selected Date: <%= selectedDate %></h2>
     <br>
 
-    <!-- Display flash message if no bookings -->
+    <!-- Display flash message if errors with bookings -->
     <% if (message && message.length > 0) { %>
         <div class="alert alert-info">
             <%= message %>
@@ -61,7 +61,7 @@
                             <form action="/confirmBooking" method="post" class="mb-2">
                                 <input type="hidden" name="id" value="<%= booking._id %>">
                                 <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
-                                <button type="submit" class="btn btn-success w-100">Confirm</button>
+                                <button type="submit" class="btn btn-warning w-100">Confirm</button>
                             </form>
             
                             <!-- Allocate Booking Form -->
@@ -71,12 +71,7 @@
                                 <button type="submit" class="btn btn-success w-100">Allocate</button>
                             </form>
             
-                            <!-- Delete Booking Form -->
-                            <form action="/deleteBooking" method="post" class="mb-2">
-                                <input type="hidden" name="id" value="<%= booking._id %>">
-                                <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
-                                <button type="submit" class="btn btn-danger w-100">Delete</button>
-                            </form>
+                            
             
                             <!-- Edit Booking Form -->
                             <form action="/editBooking" method="get" class="mb-2">
@@ -92,15 +87,22 @@
                                 <button type="submit" class="btn btn-info w-100">Move</button>
                             </form>
 
+                            <!-- Delete Booking Form -->
+                            <form action="/deleteBooking" method="post" class="mb-2">
+                                <input type="hidden" name="id" value="<%= booking._id %>">
+                                <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
+                                <button type="submit" class="btn btn-danger w-100">Delete</button>
+                            </form>
+
                             <!-- Cancel Confirmation Form -->
-                            <form action="/cancelConfirm" method="get" class="mb-2">
+                            <form action="/cancelConfirm" method="post" class="mb-2">
                                 <input type="hidden" name="id" value="<%= booking._id %>">
                                 <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
                                 <button type="submit" class="btn btn-danger w-100">Cancel confirmation</button>
                             </form>
 
                             <!-- Cancel Allocation Form -->
-                            <form action="/cancelAllocation" method="get" class="mb-2">
+                            <form action="/cancelAllocation" method="post" class="mb-2">
                                 <input type="hidden" name="id" value="<%= booking._id %>">
                                 <input type="hidden" name="selectedDate" value="<%= selectedDate %>">
                                 <button type="submit" class="btn btn-danger w-100">Cancel allocation</button>

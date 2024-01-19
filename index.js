@@ -164,7 +164,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    default: "edit"
+    default: "none"
   },
   active: { // 'active' field to indicate if the account is active
     type: Boolean,
@@ -210,60 +210,28 @@ app.use(session({
   }));
 
 
-// Automatically log the user out after a timeout period based on role and inactivity
-app.use((req, res, next) => {
-  console.log("Inactivity timeout middleware entered.");
+  app.use((req, res, next) => {
+    console.log("Inactivity timeout middleware entered.");
+    
+    // Check if session exists and has an expiry time
+    if (req.session && req.session.cookie && req.session.cookie.expires) {
+      // Calculate time left until session expires
+      const timeLeft = new Date(req.session.cookie.expires) - new Date();
+      console.log(`Time left for session expiry: ${timeLeft}ms`);
   
-  // Store a reference to the user's session
-  const userSession = req.session;
-
-  // Determine the session timeout based on the user's role and device type
-  let timeoutDuration = 600000; // Default timeout: 10 minutes (in milliseconds)
-
-  if (req.session.passport && req.session.passport.user) {
-    const user = req.session.passport.user;
-
-    // Check the user's role and device type and set the timeout accordingly
-    if (user.role === "none") {
-      timeoutDuration = 43200000; // 12 hours for "none" role (in milliseconds)
-      console.log("Timeout set to 12 hours for 'none' role.");
-    } else if (user.role === "edit" && req.useragent.isMobile) {
-      timeoutDuration = 43200000; // 12 hours for "edit" role and mobile device (in milliseconds)
-      console.log("Timeout set to 12 hours for 'edit' role and mobile device.");
-    } else {
-      console.log("Timeout set to 10 minutes (default).");
+      // If time left is less than or equal to 0, destroy the session
+      if (timeLeft <= 0) {
+        console.log("Session expired due to inactivity.");
+        req.session.destroy((err) => {
+          if (err) console.error('Error destroying session:', err);
+          // Optionally, redirect to login or handle session expiration
+        });
+      }
     }
-  }
-
-  // Log the device type
-  console.log("Device Type:", req.useragent.isMobile ? "Mobile" : "Desktop");
-
-  // Set a timer to automatically log the user out after the determined timeout period
-  const inactivityTimeout = setTimeout(() => {
-    // Check if the session has already been destroyed and a response sent
-    if (!userSession.destroyed) {
-
-      // Log that the session is destroyed
-    console.log("Session destroyed due to inactivity.");
-      // Clear the session
-      userSession.destroy((err) => {
-        if (err) {
-          console.error('Error destroying session:', err);
-        }
-      });
-
-      // Redirect to the login page upon session timeout
-    }
-  }, timeoutDuration);
-
-  // Reset the timer on user interaction
-  userSession.cookie.maxAge = timeoutDuration;
-
-  // Continue with the next middleware or route handler
-  next();
-});
-
-
+  
+    next();
+  });
+  
 
 
 
@@ -335,10 +303,14 @@ app.use(flash());
 // Authentication Route code************:
 
 
-app.get('/', redirectToDashboardIfAuthenticated, (req, res) => {
+app.get('/', (req, res, next) => {
+  console.log("'/' route hit, checking authentication next");
+  next(); // Proceed to the next middleware (redirectToDashboardIfAuthenticated)
+}, redirectToDashboardIfAuthenticated, (req, res) => {
   console.log("Going home");
-  res.render('home'); // Corrected syntax
+  res.render('home');
 });
+
 
 
 
@@ -878,8 +850,10 @@ app.get('/editBooking', checkAuthenticated, async (req, res) => {
   // Retrieve selectedDate from query parameters
   const selectedDate = req.query.selectedDate;
 
-  // Call checkUserRole function after authentication check
-  checkUserRole(req.user, req, res, selectedDate);
+   // Check user role and proceed only if true is returned
+   if (!checkUserRole(req.user, req, res, selectedDate)) {
+    return; // Stop executing as response has been sent
+  }
   
   try {
       const bookingId = req.query.id;
@@ -899,29 +873,37 @@ app.get('/editBooking', checkAuthenticated, async (req, res) => {
 
 
 
-
 app.post('/confirmBooking', checkAuthenticated, async (req, res) => {
   console.log("POST confirmation route hit"); 
+
+  // Retrieve selectedDate from request body
+  const selectedDate = req.body.selectedDate;
+
+  // Check user role and proceed only if true is returned
+  if (!checkUserRole(req.user, req, res, selectedDate)) {
+    return; // Stop executing as response has been sent
+  }
+
   try {
       const bookingId = req.body.id;
       console.log(bookingId);
       const userSurname = req.user.surname; // Assuming the surname is stored in req.user.surname
       console.log(userSurname);
 
-      // Get the selectedDate from the request
-      const selectedDate = new Date(req.body.selectedDate);
+      // Get the selectedDate as a Date object
+      const selectedDateObj = new Date(selectedDate);
 
       // Get the current date
       const currentDate = new Date();
 
       // Check if the selectedDate is not the same as the current date
-      if (selectedDate.getDate() !== currentDate.getDate() ||
-          selectedDate.getMonth() !== currentDate.getMonth() ||
-          selectedDate.getFullYear() !== currentDate.getFullYear()) {
+      if (selectedDateObj.getDate() !== currentDate.getDate() ||
+          selectedDateObj.getMonth() !== currentDate.getMonth() ||
+          selectedDateObj.getFullYear() !== currentDate.getFullYear()) {
         // Set a flash message
         req.flash('info', 'You may only confirm on the day');
         // Redirect back to the detail page
-        return res.redirect(`/detail?selectedDate=${req.body.selectedDate}`);
+        return res.redirect(`/detail?selectedDate=${selectedDate}`);
       }
 
       // If the dates are the same, proceed with confirmation
@@ -933,7 +915,7 @@ app.post('/confirmBooking', checkAuthenticated, async (req, res) => {
 
       await PacuBooking.findByIdAndUpdate(bookingId, update);
 
-      res.redirect(`/detail?selectedDate=${req.body.selectedDate}`);
+      res.redirect(`/detail?selectedDate=${selectedDate}`);
   } catch (error) {
       console.error(error);
       res.status(500).send('Error confirming booking');
@@ -941,8 +923,18 @@ app.post('/confirmBooking', checkAuthenticated, async (req, res) => {
 });
 
 
+
+
 app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
   console.log("POST allocation route hit"); 
+
+  // Retrieve selectedDate from request body
+  const selectedDateStr = req.body.selectedDate;
+
+   // Check user role and proceed only if true is returned
+   if (!checkUserRole(req.user, req, res, selectedDate)) {
+    return; // Stop executing as response has been sent
+  }
 
   try {
       const bookingId = req.body.id;
@@ -950,8 +942,8 @@ app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
       const userSurname = req.user.surname; // Assuming the surname is stored in req.user.surname
       console.log(userSurname);
 
-      // Get the selectedDate from the request
-      const selectedDate = new Date(req.body.selectedDate);
+      // Get the selectedDate as a Date object
+      const selectedDate = new Date(selectedDateStr);
 
       // Get the current date
       const currentDate = new Date();
@@ -960,12 +952,23 @@ app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
       if (selectedDate.getDate() !== currentDate.getDate() ||
           selectedDate.getMonth() !== currentDate.getMonth() ||
           selectedDate.getFullYear() !== currentDate.getFullYear()) {
-        // Set a flash message
         req.flash('info', 'You may only allocate on the day');
-        // Redirect back to the detail page
-        return res.redirect(`/detail?selectedDate=${req.body.selectedDate}`);
+        return res.redirect(`/detail?selectedDate=${selectedDateStr}`);
       }
 
+      // First, retrieve the current booking to check its confirmation status
+      const currentBooking = await PacuBooking.findById(bookingId);
+      if (!currentBooking) {
+          throw new Error('Booking not found');
+      }
+
+      // Check if the booking is already confirmed
+      if (currentBooking.confirmed !== 'yes') {
+          req.flash('info', 'The booking needs to be confirmed before it is allocated');
+          return res.redirect(`/detail?selectedDate=${selectedDateStr}`);
+      }
+
+      // Proceed to update the booking since it is confirmed
       const update = {
           confirmed: 'allocated',
           allocatePerson: userSurname,
@@ -974,12 +977,14 @@ app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
 
       await PacuBooking.findByIdAndUpdate(bookingId, update);
 
-      res.redirect(`/detail?selectedDate=${req.body.selectedDate}`);
+      res.redirect(`/detail?selectedDate=${selectedDateStr}`);
   } catch (error) {
-      console.error(error);
-      res.status(500).send('Error allocating booking');
+      console.error('Error allocating booking:', error);
+      req.flash('error', 'Error allocating booking');
+      res.redirect(`/detail?selectedDate=${req.body.selectedDate}`);
   }
 });
+
 
 
 
@@ -994,6 +999,11 @@ app.get('/moveBooking', checkAuthenticated, async (req, res) => {
 
       if (!bookingId) {
           throw new Error('Booking ID not provided');
+      }
+
+      // Check user role and proceed only if true is returned
+      if (!checkUserRole(req.user, req, res, selectedDate)) {
+        return; // Stop executing as response has been sent
       }
 
       // Find the booking in the database
@@ -1026,11 +1036,19 @@ app.get('/moveBooking', checkAuthenticated, async (req, res) => {
 
 
 
-
 app.get('/newBooking', checkAuthenticated, (req, res) => {
-  const selectedDate = req.query.selectedDate;
-  console.log('Selected Date3:', selectedDate);
+  console.log('GET newBooking route hit');
 
+  // Retrieve selectedDate from query parameters
+  const selectedDate = req.query.selectedDate;
+  console.log('Selected Date:', selectedDate);
+
+   // Check user role and proceed only if true is returned
+   if (!checkUserRole(req.user, req, res, selectedDate)) {
+    return; // Stop executing as response has been sent
+  }
+
+  // Proceed with the rest of the logic if user role is appropriate
   res.render('new', { selectedDate: selectedDate });
 });
 
@@ -1050,49 +1068,65 @@ app.get('/newBooking', checkAuthenticated, (req, res) => {
 
 
 
+
 app.post('/createBooking', checkAuthenticated, async (req, res) => {
+  // Retrieve selectedDate from request body
+  const selectedDate = req.body.selectedDate;
 
-    try {
-        const selectedDate = new Date(req.body.selectedDate);
-        console.log('Selected Date2:', req.body.selectedDate);
+   // Check user role and proceed only if true is returned
+   if (!checkUserRole(req.user, req, res, selectedDate)) {
+    return; // Stop executing as response has been sent
+  }
 
-        if (isNaN(selectedDate)) {
-            throw new Error('Invalid date format');
-        }
+  try {
+      // Convert string to Date and check for valid date
+      const selectedDateObj = new Date(selectedDate);
+      console.log('Selected Date2:', selectedDate);
+      if (isNaN(selectedDateObj)) {
+          throw new Error('Invalid date format');
+      }
 
-        const newBookingData = {
-            patientFirstName: req.body.patientFirstName,
-            patientSurname: req.body.patientSurname,
-            folderNumber: req.body.folderNumber,
-            procedure: req.body.procedure,
-            reasonForBooking: req.body.reasonForBooking,
-            anaesthetist: req.body.anaesthetist,
-            selectedDate: new Date(req.body.selectedDate), // Convert string to Date
-            // Include other new fields
-            bookingPerson: req.body.bookingPerson, // Ensure this value is provided in the form
-            confirmPerson: req.body.confirmPerson || 'None', // Use provided value or default to 'None'
-            confirmed: req.body.confirmed || 'no', // Use provided value or default to 'no'
-            allocatePerson: req.body.allocatePerson || 'None',
-            colour: req.body.colour || 'card text-bg-danger mb-3'
-        };
+      // Construct new booking data
+      const newBookingData = {
+          patientFirstName: req.body.patientFirstName,
+          patientSurname: req.body.patientSurname,
+          folderNumber: req.body.folderNumber,
+          procedure: req.body.procedure,
+          reasonForBooking: req.body.reasonForBooking,
+          anaesthetist: req.body.anaesthetist,
+          selectedDate: selectedDateObj,
+          bookingPerson: req.body.bookingPerson,
+          confirmPerson: req.body.confirmPerson || 'None',
+          confirmed: req.body.confirmed || 'no',
+          allocatePerson: req.body.allocatePerson || 'None',
+          colour: req.body.colour || 'card text-bg-danger mb-3'
+      };
 
-        const newBooking = new PacuBooking(newBookingData);
-        await newBooking.save();
+      // Save the new booking
+      const newBooking = new PacuBooking(newBookingData);
+      await newBooking.save();
 
-        // Redirect or send a response after successful booking creation
-        res.redirect(`/detail?selectedDate=${req.body.selectedDate}`);
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error creating new booking');
-    }
+      // Redirect to detail page with the selected date
+      res.redirect(`/detail?selectedDate=${selectedDate}`);
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Error creating new booking');
+  }
 });
 
 
 
 
 
-
 app.post('/updateBooking', checkAuthenticated, async (req, res) => {
+  // Retrieve selectedDate from request body
+  const selectedDate = req.body.selectedDate;
+
+   // Check user role and proceed only if true is returned
+   if (!checkUserRole(req.user, req, res, selectedDate)) {
+    return; // Stop executing as response has been sent
+  }
+
   try {
       const bookingId = req.body.id; // Extract the booking ID
       const updatedData = {
@@ -1111,7 +1145,7 @@ app.post('/updateBooking', checkAuthenticated, async (req, res) => {
       await PacuBooking.findByIdAndUpdate(bookingId, updatedData);
 
       // Redirect to the /detail route with the selectedDate
-      res.redirect(`/detail?selectedDate=${req.body.selectedDate}`);
+      res.redirect(`/detail?selectedDate=${selectedDate}`);
   } catch (error) {
       console.error(error);
       res.status(500).send('Error updating booking');
@@ -1124,9 +1158,15 @@ app.post('/updateBooking', checkAuthenticated, async (req, res) => {
 
 
 
-
-
 app.post('/deleteBooking', checkAuthenticated, async (req, res) => {
+  // Retrieve selectedDate from request body
+  const selectedDate = req.body.selectedDate;
+
+   // Check user role and proceed only if true is returned
+   if (!checkUserRole(req.user, req, res, selectedDate)) {
+    return; // Stop executing as response has been sent
+  }
+
   try {
       // Extract the booking ID from the request body
       const bookingId = req.body.id;
@@ -1139,7 +1179,6 @@ app.post('/deleteBooking', checkAuthenticated, async (req, res) => {
       await PacuBooking.findByIdAndDelete(bookingId);
 
       // Redirect back to the detail page with the selected date
-      const selectedDate = req.body.selectedDate;
       res.redirect(`/detail?selectedDate=${selectedDate}`);
   } catch (error) {
       console.error('Error deleting booking:', error);
@@ -1147,16 +1186,30 @@ app.post('/deleteBooking', checkAuthenticated, async (req, res) => {
   }
 });
 
-app.post('/newdate', async (req, res) => {
+
+
+
+
+app.post('/newdate', checkAuthenticated, async (req, res) => {
+  // Retrieve the new date from request body
+  const newDateString = req.body.newDate;
+
+   // Check user role and proceed only if true is returned
+   if (!checkUserRole(req.user, req, res, selectedDate)) {
+    return; // Stop executing as response has been sent
+  }
+
   try {
       const bookingId = req.body.id;
-      const newDateString = req.body.newDate; // Store the new date string
 
       if (!bookingId || !newDateString) {
           throw new Error('Missing booking ID or new date');
       }
 
       const newDate = new Date(newDateString);
+      if (isNaN(newDate)) {
+          throw new Error('Invalid date format');
+      }
 
       // Define the default colour
       const defaultColour = 'card text-bg-danger mb-3';
@@ -1166,7 +1219,7 @@ app.post('/newdate', async (req, res) => {
           selectedDate: newDate,
           colour: defaultColour // Resetting the colour to the default
       });
-     
+      
       // Redirect back to the detail page with the new date as a query parameter
       res.redirect(`/detail?selectedDate=${newDateString}`);
   } catch (error) {
@@ -1176,6 +1229,88 @@ app.post('/newdate', async (req, res) => {
 });
 
 
+
+
+app.post('/cancelConfirm', checkAuthenticated, async (req, res) => {
+  console.log("POST cancel confirmation route hit"); 
+
+  // Retrieve selectedDate from request body
+  const selectedDate = req.body.selectedDate;
+
+  // Check user role and proceed only if true is returned
+  if (!checkUserRole(req.user, req, res, selectedDate)) {
+    return; // Stop executing as response has been sent
+  }
+
+  try {
+      const bookingId = req.body.id;
+      console.log('Cancelling confirmation for booking ID:', bookingId);
+
+      // Define the update to cancel the confirmation
+      const update = {
+          confirmed: 'no',
+          confirmPerson: 'none',
+          colour: 'card text-bg-danger mb-3' // Red colour indicating cancellation
+      };
+
+      // Update the booking in the database
+      await PacuBooking.findByIdAndUpdate(bookingId, update);
+
+      // Redirect back to the detail page with the selected date
+      res.redirect(`/detail?selectedDate=${selectedDate}`);
+  } catch (error) {
+      console.error('Error cancelling booking confirmation:', error);
+      res.status(500).send('Error cancelling booking confirmation');
+  }
+});
+
+
+
+
+app.post('/cancelAllocation', checkAuthenticated, async (req, res) => {
+  console.log("POST cancel allocation route hit");
+
+  // Retrieve selectedDate from request body
+  const selectedDateStr = req.body.selectedDate;
+
+   // Check user role and proceed only if true is returned
+   if (!checkUserRole(req.user, req, res, selectedDate)) {
+    return; // Stop executing as response has been sent
+  }
+
+  try {
+      const bookingId = req.body.id;
+      console.log('Cancelling allocation for booking ID:', bookingId);
+
+      // First, retrieve the current booking to check its confirmation status
+      const currentBooking = await PacuBooking.findById(bookingId);
+      if (!currentBooking) {
+          throw new Error('Booking not found');
+      }
+
+      // Check if the booking is already allocated
+      if (currentBooking.confirmed !== 'allocated') {
+          req.flash('info', 'The booking needs to be allocated before it can be cancelled');
+          return res.redirect(`/detail?selectedDate=${selectedDateStr}`);
+      }
+
+      // Proceed to update the booking to cancel the allocation
+      const update = {
+          confirmed: 'yes', // Set back to 'yes' to indicate confirmed but not allocated
+          allocatePerson: 'none', // Resetting allocatePerson to default
+          colour: 'card text-bg-warning mb-3' // Yellow colour indicating warning
+      };
+
+      await PacuBooking.findByIdAndUpdate(bookingId, update);
+
+      // Redirect back to the detail page with the selected date
+      res.redirect(`/detail?selectedDate=${selectedDateStr}`);
+  } catch (error) {
+      console.error('Error cancelling booking allocation:', error);
+      req.flash('error', 'Error cancelling booking allocation');
+      res.redirect(`/detail?selectedDate=${req.body.selectedDate}`);
+  }
+});
 
 
 
