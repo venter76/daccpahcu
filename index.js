@@ -954,7 +954,7 @@ app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
   console.log("POST allocation route hit"); 
 
   // Retrieve selectedDate from request body
-  const selectedDateStr = req.body.selectedDate;
+  const selectedDate = req.body.selectedDate;
 
    // Check user role and proceed only if true is returned
    if (!checkUserRole(req.user, req, res, selectedDate)) {
@@ -968,17 +968,17 @@ app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
       console.log(userSurname);
 
       // Get the selectedDate as a Date object
-      const selectedDate = new Date(selectedDateStr);
+      const selectedDateObj = new Date(selectedDate);
 
       // Get the current date
       const currentDate = new Date();
 
       // Check if the selectedDate is not the same as the current date
-      if (selectedDate.getDate() !== currentDate.getDate() ||
-          selectedDate.getMonth() !== currentDate.getMonth() ||
-          selectedDate.getFullYear() !== currentDate.getFullYear()) {
+      if (selectedDateObj.getDate() !== currentDate.getDate() ||
+          selectedDateObj.getMonth() !== currentDate.getMonth() ||
+          selectedDateObj.getFullYear() !== currentDate.getFullYear()) {
         req.flash('info', 'You may only allocate on the day');
-        return res.redirect(`/detail?selectedDate=${selectedDateStr}`);
+        return res.redirect(`/detail?selectedDate=${selectedDate}`);
       }
 
       // First, retrieve the current booking to check its confirmation status
@@ -990,7 +990,7 @@ app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
       // Check if the booking is already confirmed
       if (currentBooking.confirmed !== 'yes') {
           req.flash('info', 'The booking needs to be confirmed before it is allocated');
-          return res.redirect(`/detail?selectedDate=${selectedDateStr}`);
+          return res.redirect(`/detail?selectedDate=${selectedDate}`);
       }
 
       // Proceed to update the booking since it is confirmed
@@ -1002,7 +1002,7 @@ app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
 
       await PacuBooking.findByIdAndUpdate(bookingId, update);
 
-      res.redirect(`/detail?selectedDate=${selectedDateStr}`);
+      res.redirect(`/detail?selectedDate=${selectedDate}`);
   } catch (error) {
       console.error('Error allocating booking:', error);
       req.flash('error', 'Error allocating booking');
