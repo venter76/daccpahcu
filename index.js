@@ -513,7 +513,7 @@ app.post('/register', async function(req, res) {
           from: 'brayroadapps@gmail.com',
           to: user.username,
           subject: 'Email Verification',
-          text: `Please copy and paste this code into text box:    ${verificationToken}`,
+          text: `To register for the DaccPahcu App, please copy and paste this code into text box:    ${verificationToken}`,
           // text: `Please click the following link to verify your email address: ${verificationLink}`,
       };
 
