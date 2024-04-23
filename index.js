@@ -476,7 +476,8 @@ app.post('/register', async function(req, res) {
       return res.redirect('/register');
   }
 
-  const passwordPattern = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{7,}$/;
+  const passwordPattern = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d@#$%^&*()_+!]{7,}$/;
+
     if (!passwordPattern.test(req.body.password)) {
         console.log('Password does not meet requirements.');
         req.flash('error', 'Password must be minimum 7 characters with at least 1 capital letter and 1 number.');
