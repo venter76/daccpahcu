@@ -164,7 +164,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    default: "none"
+    default: "edit"
   },
   active: { // 'active' field to indicate if the account is active
     type: Boolean,
