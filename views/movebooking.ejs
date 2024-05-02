@@ -11,10 +11,16 @@
         <h1>Move Booking</h1>
         <form action="/newdate" method="post">
             <input type="hidden" name="id" value="<%= booking._id %>">
+
             <div class="mb-3">
                 <label for="newDate" class="form-label">Select date to move booking to:</label>
-                <input type="date" class="form-control" id="newDate" name="newDate" required>
+                <input type="date" class="form-control" id="newDate" name="selectedDate" required>
             </div>
+            
+            <!-- <div class="mb-3">
+                <label for="newDate" class="form-label">Select date to move booking to:</label>
+                <input type="date" class="form-control" id="newDate" name="newDate" required>
+            </div> -->
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
     </div>

@@ -1213,16 +1213,13 @@ app.post('/deleteBooking', checkAuthenticated, async (req, res) => {
 });
 
 
-
-
-
 app.post('/newdate', checkAuthenticated, async (req, res) => {
   // Retrieve the new date from request body
-  const newDateString = req.body.newDate;
+  const newDateString = req.body.selectedDate;
 
-   // Check user role and proceed only if true is returned
-   if (!checkUserRole(req.user, req, res, selectedDate)) {
-    return; // Stop executing as response has been sent
+  // Check user role and proceed only if true is returned
+  if (!checkUserRole(req.user, req, res, newDateString)) {
+      return; // Stop executing as response has been sent
   }
 
   try {
@@ -1253,6 +1250,46 @@ app.post('/newdate', checkAuthenticated, async (req, res) => {
       res.status(500).send('Internal Server Error');
   }
 });
+
+
+
+// app.post('/newdate', checkAuthenticated, async (req, res) => {
+//   // Retrieve the new date from request body
+//   const newDateString = req.body.newDate;
+
+//    // Check user role and proceed only if true is returned
+//    if (!checkUserRole(req.user, req, res, selectedDate)) {
+//     return; // Stop executing as response has been sent
+//   }
+
+//   try {
+//       const bookingId = req.body.id;
+
+//       if (!bookingId || !newDateString) {
+//           throw new Error('Missing booking ID or new date');
+//       }
+
+//       const newDate = new Date(newDateString);
+//       if (isNaN(newDate)) {
+//           throw new Error('Invalid date format');
+//       }
+
+//       // Define the default colour
+//       const defaultColour = 'card text-bg-danger mb-3';
+
+//       // Update the booking in the database
+//       await PacuBooking.findByIdAndUpdate(bookingId, {
+//           selectedDate: newDate,
+//           colour: defaultColour // Resetting the colour to the default
+//       });
+      
+//       // Redirect back to the detail page with the new date as a query parameter
+//       res.redirect(`/detail?selectedDate=${newDateString}`);
+//   } catch (error) {
+//       console.error('Error updating booking date:', error);
+//       res.status(500).send('Internal Server Error');
+//   }
+// });
 
 
 
