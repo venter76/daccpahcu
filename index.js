@@ -706,7 +706,7 @@ app.post('/reset', async function(req, res, next) {
       return res.redirect('/forgotpassword');
     }
 
-    const passwordPattern = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{7,}$/;
+    const passwordPattern = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d@#$%^&*()_+!]{7,}$/;
     if (!passwordPattern.test(req.body.password)) {
         console.log('Password does not meet requirements.');
         req.flash('error', 'Password must be minimum 7 characters with at least 1 capital letter and 1 number.');
