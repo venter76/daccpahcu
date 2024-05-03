@@ -1,4 +1,4 @@
-const CACHE_NAME = 'static-cache-v14';
+const CACHE_NAME = 'static-cache-v15';
 const STATIC_ASSETS = [
     '/placeholder2.html',
     '/iconLarge_1.png',
@@ -33,7 +33,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     // Define a list of paths that should always be network-first
-    const networkFirstPaths = ['/detail', '/base', '/edit', '/new', '/home'];
+    const networkFirstPaths = ['/detail', '/base', '/edit', '/new'];
 
     // Check if the request URL matches any of the network-first paths
     const isNetworkFirstPath = networkFirstPaths.some(path => event.request.url.includes(path));
