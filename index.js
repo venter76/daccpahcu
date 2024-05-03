@@ -371,8 +371,8 @@ app.post("/login", loginLimiter, function(req, res, next) {
 
       // Set the session cookie maxAge based on user's role
       if (user.role === "edit") {
-        req.session.cookie.maxAge = 600000; // 10 minutes (for "edit" role)
-        console.log("Session maxAge set to 2 minutes for 'edit' role.");
+        req.session.cookie.maxAge = 2160000; // 6 hours (for "edit" role)
+        console.log("Session maxAge set to 6 hours for 'edit' role.");
       } else if (user.role === "none") {
         req.session.cookie.maxAge = 86400000; // 24 hours (for "none" role)
         console.log("Session maxAge set to 24 hours for 'none' role.");
