@@ -33,7 +33,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     // Define a list of paths that should always be network-first
-    const networkFirstPaths = ['/detail', '/base', '/edit', '/new'];
+    const networkFirstPaths = ['/detail', '/base', '/edit', '/new', 'login'];
 
     // Check if the request URL matches any of the network-first paths
     const isNetworkFirstPath = networkFirstPaths.some(path => event.request.url.includes(path));
