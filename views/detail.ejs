@@ -21,7 +21,7 @@
    <% bookings.forEach(function(booking) { %>
     <div class="col-12">
         <!-- New Container to control the width -->
-    <div class="mx-auto" style="width: 80%;">
+    <div class="mx-auto" style="width: 90%;">
         <div class="<%= booking.colour %>"> 
           <div class="card-body">
         
@@ -39,6 +39,8 @@
                 
                 <p class="card-text">Confirmed by: <%= booking.confirmPerson %></p>
                 <p class="card-text">Bed allocated by: <%= booking.allocatePerson %></p>
+                <!-- New section for Notes -->
+                <p class="card-text">Notes: <%= booking.notes %></p>
                 <br>
             </div>
             <div class="card-footer d-flex justify-content-around">

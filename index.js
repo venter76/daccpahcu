@@ -141,7 +141,12 @@ const pacuBookingSchema = new mongoose.Schema({
         type: String,
         default: 'None',
         required: true
-      }
+      },
+       // New field for notes
+    notes: {
+      type: String,
+      default: ''
+    }
 });
 
 const PacuBooking = mongoose.model('PacuBooking', pacuBookingSchema);
@@ -1121,7 +1126,8 @@ app.post('/createBooking', checkAuthenticated, async (req, res) => {
           confirmPerson: req.body.confirmPerson || 'None',
           confirmed: req.body.confirmed || 'no',
           allocatePerson: req.body.allocatePerson || 'None',
-          colour: req.body.colour || 'card text-bg-danger mb-3'
+          colour: req.body.colour || 'card text-bg-danger mb-3',
+          notes: req.body.notes || ''
       };
 
       // Save the new booking
@@ -1160,7 +1166,9 @@ app.post('/updateBooking', checkAuthenticated, async (req, res) => {
           anaesthetist: req.body.anaesthetist,
           bookingPerson: req.body.bookingPerson,
           // booked field is not updated
-          confirmed: req.body.confirmed
+          confirmed: req.body.confirmed,
+          notes: req.body.notes
+
       };
 
       // Update the booking in the database
