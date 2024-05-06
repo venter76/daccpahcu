@@ -547,6 +547,31 @@ app.post('/verify', async function(req, res) {
       // Find the user with the matching verification token
       const user = await User.findOne({ verificationToken: verificationToken });
 
+      if (!user) {
+          // Invalid or expired token
+          console.log('Token not found or expired');
+          res.status(401).send('Unauthorized: Token not found or expired');
+          return; // Ensure no further execution after response
+      }
+
+      // Update the user's verification status
+      user.active = true;
+      user.verificationToken = null; // Clear the verification token
+
+      await user.save();
+      console.log('Email verified for user2555555555555');
+      req.flash('success', 'Email verified for user. Please login.');
+      console.log('Redirecting to login page');
+      return res.redirect('/login'); // Use return to exit after sending response
+  } catch (err) {
+      console.log('Error during verification:', err);
+      // Avoid sending multiple responses: only one response should be sent
+      if (!res.headersSent) {
+          res.status(500).send('Error processing request');
+      }
+  }
+});
+
 // Below is origional link code for clickable link from email:
 
 
@@ -558,36 +583,7 @@ app.post('/verify', async function(req, res) {
 //       // Find the user with the matching verification token
 //       const user = await User.findOne({ verificationToken: verificationToken });
 
-      if (!user) {
-          // Invalid or expired token
-          console.log('Token not found or expired');
-          res.send('Unauthorized login');
-          return res.redirect('/'); // Use 'return' to exit the function early
-      }
-
-      // Update the user's verification status
-      user.active = true;
-      user.verificationToken = null; // Clear the verification token
-
-      try {
-          await user.save();
-          console.log('Email verified for user2555555555555');
-
-          // Add the success message using flash
-          req.flash('success', 'Email verified for user. Please login.');
-          console.log('Redirecting to login page');
-          res.redirect('/login');
-      } catch (saveErr) {
-          console.log('Error saving user:', saveErr);
-          res.redirect('/');
-      }
-  } catch (err) {
-      console.log(err);
-      res.send('Unauthorized login');
-      res.redirect('/');
-  }
-});
-
+    
 
 
 app.get('/forgotpassword', function(req, res) {
