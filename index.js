@@ -208,34 +208,35 @@ app.use(session({
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // must be 'none' to enable cross-site delivery
       httpOnly: true, // prevents JavaScript from making changes
-      
+      maxAge: 1000 * 60 * 60 * 6
+
 
     },
     rolling: true, // Enable the rolling behavior
   }));
 
-
-  app.use((req, res, next) => {
-    console.log("Inactivity timeout middleware entered.");
+ 
+  // app.use((req, res, next) => {
+  //   console.log("Inactivity timeout middleware entered.");
     
-    // Check if session exists and has an expiry time
-    if (req.session && req.session.cookie && req.session.cookie.expires) {
-      // Calculate time left until session expires
-      const timeLeft = new Date(req.session.cookie.expires) - new Date();
-      console.log(`Time left for session expiry: ${timeLeft}ms`);
+  //   // Check if session exists and has an expiry time
+  //   if (req.session && req.session.cookie && req.session.cookie.expires) {
+  //     // Calculate time left until session expires
+  //     const timeLeft = new Date(req.session.cookie.expires) - new Date();
+  //     console.log(`Time left for session expiry: ${timeLeft}ms`);
   
-      // If time left is less than or equal to 0, destroy the session
-      if (timeLeft <= 0) {
-        console.log("Session expired due to inactivity.");
-        req.session.destroy((err) => {
-          if (err) console.error('Error destroying session:', err);
-          // Optionally, redirect to login or handle session expiration
-        });
-      }
-    }
+  //     // If time left is less than or equal to 0, destroy the session
+  //     if (timeLeft <= 0) {
+  //       console.log("Session expired due to inactivity.");
+  //       req.session.destroy((err) => {
+  //         if (err) console.error('Error destroying session:', err);
+  //         // Optionally, redirect to login or handle session expiration
+  //       });
+  //     }
+  //   }
   
-    next();
-  });
+  //   next();
+  // });
   
 
 
@@ -260,7 +261,7 @@ app.use(session({
 });
 
 
-app.use(flash());
+
 
   
 
@@ -339,9 +340,6 @@ app.get('/login', (req, res) => {
   });
 });
 
-
-
-
 app.post("/login", loginLimiter, function(req, res, next) {
   console.log("Login post route hit");
 
@@ -374,16 +372,7 @@ app.post("/login", loginLimiter, function(req, res, next) {
       console.log(`User ${user.email} logged in successfully, redirecting...`);
       req.session.isLoggedIn = true;
 
-      // Set the session cookie maxAge based on user's role
-      if (user.role === "edit") {
-        req.session.cookie.maxAge = 2160000; // 6 hours (for "edit" role)
-        console.log("Session maxAge set to 6 hours for 'edit' role.");
-      } else if (user.role === "none") {
-        req.session.cookie.maxAge = 86400000; // 24 hours (for "none" role)
-        console.log("Session maxAge set to 24 hours for 'none' role.");
-      } else {
-        console.log("Default session maxAge used.");
-      }
+      console.log("Session set for 6 hours");
 
       // Redirect based on user's first login status
       if (!user.firstname) {
@@ -396,6 +385,63 @@ app.post("/login", loginLimiter, function(req, res, next) {
     });
   })(req, res, next);
 });
+
+
+
+// app.post("/login", loginLimiter, function(req, res, next) {
+//   console.log("Login post route hit");
+
+//   passport.authenticate("local", function(err, user, info) {
+//     if (err) {
+//       console.log("Passport authentication error:", err);
+//       return next(err); // Pass the error to the next middleware
+//     }
+
+//     if (!user) {
+//       console.log("Authentication failed, user not found or incorrect credentials");
+//       req.flash('error', 'Incorrect username or password');
+//       console.log("Flash message set"); // Debugging
+//       return res.redirect("/login");
+//     }
+
+//     if (!user.active) {  // User exists but hasn't verified their email
+//       console.log("User email not verified");
+//       req.flash('error', 'Please verify your email to complete registration. If you cannot find the email, then register again as a new user.');
+//       return res.redirect("/verifytoken");
+//     }
+
+//     req.login(user, function(err) {
+//       if (err) {
+//         console.log("Error during req.login:", err);
+//         return next(err); // Pass the error to the next middleware
+//       }
+
+//       // At this point, the user is successfully authenticated.
+//       console.log(`User ${user.email} logged in successfully, redirecting...`);
+//       req.session.isLoggedIn = true;
+
+//       // Set the session cookie maxAge based on user's role
+//       if (user.role === "edit") {
+//         req.session.cookie.maxAge = 2160000; // 6 hours (for "edit" role)
+//         console.log("Session maxAge set to 6 hours for 'edit' role.");
+//       } else if (user.role === "none") {
+//         req.session.cookie.maxAge = 86400000; // 24 hours (for "none" role)
+//         console.log("Session maxAge set to 24 hours for 'none' role.");
+//       } else {
+//         console.log("Default session maxAge used.");
+//       }
+
+//       // Redirect based on user's first login status
+//       if (!user.firstname) {
+//         console.log("Redirecting first-time user to welcome page");
+//         return res.redirect("/welcome");
+//       } else {
+//         console.log("Redirecting returning user to the main page");
+//         return res.redirect("/base");
+//       }
+//     });
+//   })(req, res, next);
+// });
 
 
 
