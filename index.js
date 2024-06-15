@@ -53,7 +53,7 @@ transporter.verify(function (error, success) {
   if(error) {
       console.log(error);
   } else {
-      console.log('Server validation done and ready for messages.')
+      // console.log('Server validation done and ready for messages.')
   }
 });
 
@@ -75,7 +75,7 @@ const connectDB = async () => {
       // useUnifiedTopology: true
     });
 
-    console.log('Connected to MongoDB Atlas:', conn.connection.host);
+    // console.log('Connected to MongoDB Atlas:', conn.connection.host);
   } catch (error) {
     console.error('Error connecting to MongoDB Atlas:', error);
     process.exit(1);
@@ -301,7 +301,7 @@ app.use(session({
 
 
   app.get('/checkOnline', (req, res) => {
-    console.log('Entered checkOnline route');
+    // console.log('Entered checkOnline route');
     res.status(200).send('Online');
 });
 
@@ -310,10 +310,10 @@ app.use(session({
 
 
 app.get('/', (req, res, next) => {
-  console.log("'/' route hit, checking authentication next");
+  // console.log("'/' route hit, checking authentication next");
   next(); // Proceed to the next middleware (redirectToDashboardIfAuthenticated)
 }, redirectToDashboardIfAuthenticated, (req, res) => {
-  console.log("Going home");
+  // console.log("Going home");
   res.render('home');
 });
 
@@ -331,8 +331,8 @@ app.get('/login', (req, res) => {
   // Retrieve and log both success and error flash messages
   const successMessages = req.flash('success');
   const errorMessages = req.flash('error');
-  console.log("Success flash messages available:", successMessages);
-  console.log("Error flash messages available:", errorMessages);
+  // console.log("Success flash messages available:", successMessages);
+  // console.log("Error flash messages available:", errorMessages);
 
   res.render('login', { 
     success: successMessages,
@@ -341,7 +341,7 @@ app.get('/login', (req, res) => {
 });
 
 app.post("/login", loginLimiter, function(req, res, next) {
-  console.log("Login post route hit");
+  // console.log("Login post route hit");
 
   passport.authenticate("local", function(err, user, info) {
     if (err) {
@@ -352,7 +352,7 @@ app.post("/login", loginLimiter, function(req, res, next) {
     if (!user) {
       console.log("Authentication failed, user not found or incorrect credentials");
       req.flash('error', 'Incorrect username or password');
-      console.log("Flash message set"); // Debugging
+      // console.log("Flash message set"); // Debugging
       return res.redirect("/login");
     }
 
@@ -369,17 +369,17 @@ app.post("/login", loginLimiter, function(req, res, next) {
       }
 
       // At this point, the user is successfully authenticated.
-      console.log(`User ${user.email} logged in successfully, redirecting...`);
+      // console.log(`User ${user.email} logged in successfully, redirecting...`);
       req.session.isLoggedIn = true;
 
       console.log("Session set for 6 hours");
 
       // Redirect based on user's first login status
       if (!user.firstname) {
-        console.log("Redirecting first-time user to welcome page");
+        // console.log("Redirecting first-time user to welcome page");
         return res.redirect("/welcome");
       } else {
-        console.log("Redirecting returning user to the main page");
+        // console.log("Redirecting returning user to the main page");
         return res.redirect("/base");
       }
     });
@@ -475,7 +475,7 @@ app.post('/welcome', async (req, res) => {
 
   const { firstName, surname } = req.body;
 
-  console.log(req.body);
+  // console.log(req.body);
 
 
   if (!req.user) {
@@ -844,7 +844,7 @@ app.post('/reset', async function(req, res, next) {
   
 
   app.get('/base', checkAuthenticated, async (req, res) => {
-    console.log("Entered base route");
+    // console.log("Entered base route");
     try {
       
       res.render('base', { user: req.user });
@@ -864,7 +864,7 @@ app.post('/reset', async function(req, res, next) {
         // Append a default time (08:00 AM) to the selected date
         const selectedDateWithTime = new Date(selectedDateString + "T08:00:00");
 
-        console.log('Selected Date with default time:', selectedDateWithTime);
+        // console.log('Selected Date with default time:', selectedDateWithTime);
 
         // Format the date for the query parameter
         const formattedDate = selectedDateWithTime.toISOString().split('T')[0];
@@ -883,11 +883,11 @@ app.post('/reset', async function(req, res, next) {
 
 
 app.get('/detail', checkAuthenticated, async (req, res) => {
-    console.log("GET /detail route hit");
+    // console.log("GET /detail route hit");
   try {
       // Retrieve the selectedDate from query parameters
       const selectedDate = req.query.selectedDate;
-      console.log('Selected Date for detail:', selectedDate);
+      // console.log('Selected Date for detail:', selectedDate);
 
       // Check if selectedDate is valid
       if (!selectedDate) {
@@ -900,7 +900,7 @@ app.get('/detail', checkAuthenticated, async (req, res) => {
       // Query for bookings with the specified selectedDate
       const bookings = await PacuBooking.find({ selectedDate: dateObj }).sort({ booked: 1 });
 
-      console.log(`Number of bookings found for ${selectedDate}: ${bookings.length}`);
+      // console.log(`Number of bookings found for ${selectedDate}: ${bookings.length}`);
       if (bookings.length === 0) {
           req.flash('info', 'No bookings for this date yet');
       }
@@ -947,7 +947,7 @@ app.get('/editBooking', checkAuthenticated, async (req, res) => {
 
 
 app.post('/confirmBooking', checkAuthenticated, async (req, res) => {
-  console.log("POST confirmation route hit"); 
+  // console.log("POST confirmation route hit"); 
 
   // Retrieve selectedDate from request body
   const selectedDate = req.body.selectedDate;
@@ -959,9 +959,9 @@ app.post('/confirmBooking', checkAuthenticated, async (req, res) => {
 
   try {
       const bookingId = req.body.id;
-      console.log(bookingId);
+      // console.log(bookingId);
       const userSurname = req.user.surname; // Assuming the surname is stored in req.user.surname
-      console.log(userSurname);
+      // console.log(userSurname);
 
       // Get the selectedDate as a Date object
       const selectedDateObj = new Date(selectedDate);
@@ -999,7 +999,7 @@ app.post('/confirmBooking', checkAuthenticated, async (req, res) => {
 
 
 app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
-  console.log("POST allocation route hit"); 
+  // console.log("POST allocation route hit"); 
 
   // Retrieve selectedDate from request body
   const selectedDate = req.body.selectedDate;
@@ -1011,9 +1011,9 @@ app.post('/allocateBooking', checkAuthenticated, async (req, res) => {
 
   try {
       const bookingId = req.body.id;
-      console.log(bookingId);
+      // console.log(bookingId);
       const userSurname = req.user.surname; // Assuming the surname is stored in req.user.surname
-      console.log(userSurname);
+      // console.log(userSurname);
 
       // Get the selectedDate as a Date object
       const selectedDateObj = new Date(selectedDate);
@@ -1110,11 +1110,11 @@ app.get('/moveBooking', checkAuthenticated, async (req, res) => {
 
 
 app.get('/newBooking', checkAuthenticated, (req, res) => {
-  console.log('GET newBooking route hit');
+  // console.log('GET newBooking route hit');
 
   // Retrieve selectedDate from query parameters
   const selectedDate = req.query.selectedDate;
-  console.log('Selected Date:', selectedDate);
+  // console.log('Selected Date:', selectedDate);
 
    // Check user role and proceed only if true is returned
    if (!checkUserRole(req.user, req, res, selectedDate)) {
@@ -1154,7 +1154,7 @@ app.post('/createBooking', checkAuthenticated, async (req, res) => {
   try {
       // Convert string to Date and check for valid date
       const selectedDateObj = new Date(selectedDate);
-      console.log('Selected Date2:', selectedDate);
+      // console.log('Selected Date2:', selectedDate);
       if (isNaN(selectedDateObj)) {
           throw new Error('Invalid date format');
       }
