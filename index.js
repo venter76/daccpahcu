@@ -211,8 +211,8 @@ app.use(session({
       maxAge: 1000 * 60 * 60 * 6
 
 
-    },
-    rolling: true, // Enable the rolling behavior
+    }
+    
   }));
 
  
@@ -340,8 +340,9 @@ app.get('/login', (req, res) => {
   });
 });
 
+
 app.post("/login", loginLimiter, function(req, res, next) {
-  // console.log("Login post route hit");
+  console.log("Login post route hit");
 
   passport.authenticate("local", function(err, user, info) {
     if (err) {
@@ -352,7 +353,7 @@ app.post("/login", loginLimiter, function(req, res, next) {
     if (!user) {
       console.log("Authentication failed, user not found or incorrect credentials");
       req.flash('error', 'Incorrect username or password');
-      // console.log("Flash message set"); // Debugging
+      console.log("Flash message set"); // Debugging
       return res.redirect("/login");
     }
 
@@ -369,22 +370,79 @@ app.post("/login", loginLimiter, function(req, res, next) {
       }
 
       // At this point, the user is successfully authenticated.
-      // console.log(`User ${user.email} logged in successfully, redirecting...`);
+      console.log(`User ${user.email} logged in successfully, redirecting...`);
       req.session.isLoggedIn = true;
+      req.session.userId = user._id; // Store the user ID in the session
+      req.session.userName = user.name; // Store the user name in the session
 
-      console.log("Session set for 6 hours");
+      console.log('Session before save:', req.session);
 
-      // Redirect based on user's first login status
-      if (!user.firstname) {
-        // console.log("Redirecting first-time user to welcome page");
-        return res.redirect("/welcome");
-      } else {
-        // console.log("Redirecting returning user to the main page");
-        return res.redirect("/base");
-      }
+      req.session.save(err => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).send('An error occurred saving the session.');
+        }
+
+        console.log('Session saved successfully.');
+        // Redirect based on user's first login status
+        if (!user.firstname) {
+          console.log("Redirecting first-time user to welcome page");
+          return res.redirect("/welcome");
+        } else {
+          console.log("Redirecting returning user to the main page");
+          return res.redirect("/base");
+        }
+      });
     });
   })(req, res, next);
 });
+
+
+// app.post("/login", loginLimiter, function(req, res, next) {
+//   // console.log("Login post route hit");
+
+//   passport.authenticate("local", function(err, user, info) {
+//     if (err) {
+//       console.log("Passport authentication error:", err);
+//       return next(err); // Pass the error to the next middleware
+//     }
+
+//     if (!user) {
+//       console.log("Authentication failed, user not found or incorrect credentials");
+//       req.flash('error', 'Incorrect username or password');
+//       // console.log("Flash message set"); // Debugging
+//       return res.redirect("/login");
+//     }
+
+//     if (!user.active) {  // User exists but hasn't verified their email
+//       console.log("User email not verified");
+//       req.flash('error', 'Please verify your email to complete registration. If you cannot find the email, then register again as a new user.');
+//       return res.redirect("/verifytoken");
+//     }
+
+//     req.login(user, function(err) {
+//       if (err) {
+//         console.log("Error during req.login:", err);
+//         return next(err); // Pass the error to the next middleware
+//       }
+
+//       // At this point, the user is successfully authenticated.
+//       // console.log(`User ${user.email} logged in successfully, redirecting...`);
+//       req.session.isLoggedIn = true;
+
+//       console.log("Session set for 6 hours");
+
+//       // Redirect based on user's first login status
+//       if (!user.firstname) {
+//         // console.log("Redirecting first-time user to welcome page");
+//         return res.redirect("/welcome");
+//       } else {
+//         // console.log("Redirecting returning user to the main page");
+//         return res.redirect("/base");
+//       }
+//     });
+//   })(req, res, next);
+// });
 
 
 

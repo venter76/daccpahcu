@@ -1,5 +1,5 @@
 function redirectToDashboardIfAuthenticated(req, res, next) {
-    // console.log("Checking if user is already authenticated");
+    console.log("Checking if user is already authenticated");
     if (req.isAuthenticated()) {
     //   console.log("User is authenticated");
       return res.redirect('/base');
